@@ -13,6 +13,7 @@ app.use('/api/auth',         require('./routes/auth'));
 app.use('/api/equipos',      require('./routes/equipos'));
 app.use('/api/asignaciones', require('./routes/asignaciones'));
 app.use('/api/funcionarios', require('./routes/funcionarios'));
+app.use('/api/usuarios',     require('./routes/usuarios'));
 
 // Servir frontend estático
 app.use(express.static(path.join(__dirname, '../../frontend/public')));

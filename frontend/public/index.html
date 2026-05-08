@@ -4,484 +4,506 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>InvTech · Inventario de Equipos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+:root{--bg:#0f0f11;--bg2:#16161a;--bg3:#1e1e24;--border:#2a2a32;--border2:#36363f;--text:#e8e8f0;--text2:#9898aa;--text3:#5a5a6a;--accent:#6c63ff;--accent2:#8b83ff;--green:#2dd4a0;--amber:#f5a623;--red:#ff5c6c;--blue:#4da6ff;--r:10px;--rl:14px}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;background:#f5f5f0;color:#1a1a18;min-height:100vh}
-a{color:inherit;text-decoration:none}
-input,select,textarea{font-family:inherit;font-size:13px;padding:7px 10px;border:0.5px solid #ccc;border-radius:6px;background:#fff;color:#1a1a18;outline:none;transition:border .15s}
-input:focus,select:focus{border-color:#378ADD}
-button{font-family:inherit;font-size:13px;padding:7px 14px;border:0.5px solid #ccc;border-radius:6px;background:#fff;cursor:pointer;transition:background .15s}
-button:hover{background:#f0efe8}
-button.primary{background:#1a1a18;color:#fff;border-color:#1a1a18}
-button.primary:hover{background:#333}
+body{font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);color:var(--text);min-height:100vh}
+input,select{font-family:'DM Sans',sans-serif;font-size:13px;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);background:var(--bg3);color:var(--text);outline:none;transition:border .15s,box-shadow .15s}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+input::placeholder{color:var(--text3)}
+select option{background:var(--bg3)}
+button{font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 16px;border:1px solid var(--border2);border-radius:var(--r);background:var(--bg3);color:var(--text2);cursor:pointer;transition:all .15s;font-weight:500}
+button:hover{background:var(--bg2);color:var(--text)}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.primary:hover{background:var(--accent2);border-color:var(--accent2)}
+button.danger{background:rgba(255,92,108,.1);color:var(--red);border-color:rgba(255,92,108,.3)}
 
-/* Login */
-#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f5f5f0}
-.login-card{background:#fff;border:0.5px solid #ddd;border-radius:12px;padding:32px;width:340px}
-.login-logo{font-size:20px;font-weight:500;margin-bottom:24px;display:flex;align-items:center;gap:8px}
-.login-card h2{font-size:16px;font-weight:500;margin-bottom:20px;color:#555}
-.field{margin-bottom:14px}
-.field label{display:block;font-size:12px;color:#666;margin-bottom:4px}
-.field input{width:100%}
-.err{color:#c0392b;font-size:12px;margin-top:8px;display:none}
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;position:relative;overflow:hidden}
+.login-glow{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(108,99,255,.15) 0%,transparent 70%);top:-100px;left:-100px;pointer-events:none}
+.login-glow2{position:absolute;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(45,212,160,.1) 0%,transparent 70%);bottom:0;right:-50px;pointer-events:none}
+.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:36px;width:360px;position:relative;z-index:1;box-shadow:0 32px 80px rgba(0,0,0,.6)}
+.login-brand{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.brand-icon{width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.brand-name{font-size:18px;font-weight:600;letter-spacing:-.4px}
+.login-sub{font-size:12px;color:var(--text3);margin-bottom:28px}
+.f{margin-bottom:14px}
+.f label{display:block;font-size:11px;font-weight:600;color:var(--text3);margin-bottom:5px;letter-spacing:.04em;text-transform:uppercase}
+.f input{width:100%}
+.login-err{color:var(--red);font-size:12px;margin-top:8px;display:none;padding:9px 12px;background:rgba(255,92,108,.08);border-radius:7px;border:1px solid rgba(255,92,108,.2)}
 
-/* App */
-#app{display:none;min-height:100vh;flex-direction:column}
-.topbar{background:#fff;border-bottom:0.5px solid #ddd;padding:10px 20px;display:flex;align-items:center;justify-content:space-between}
-.topbar-left{display:flex;align-items:center;gap:10px}
-.logo{font-size:15px;font-weight:500}
-.badge{font-size:11px;background:#e6f1fb;color:#185fa5;padding:3px 9px;border-radius:99px}
-.nav{background:#fafaf7;border-bottom:0.5px solid #ddd;padding:6px 20px;display:flex;gap:4px}
-.nav a{padding:5px 12px;border-radius:6px;font-size:13px;color:#666;cursor:pointer;display:flex;align-items:center;gap:5px;border:0.5px solid transparent}
-.nav a.active{background:#fff;color:#1a1a18;border-color:#ddd;font-weight:500}
-.content{padding:20px;flex:1}
+/* APP */
+#app{display:flex;min-height:100vh}
+.sidebar{width:216px;background:var(--bg2);border-right:1px solid var(--border);min-height:100vh;position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:10}
+.sb-top{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.sb-icon{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.sb-name{font-size:14px;font-weight:600;letter-spacing:-.3px}
+.sb-user{padding:12px 16px;border-bottom:1px solid var(--border)}
+.sb-uname{font-size:13px;font-weight:500}
+.sb-urole{font-size:11px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:5px}
+.role-dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+.sb-nav{padding:10px 8px;flex:1;overflow-y:auto}
+.nav-sec{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:0 8px;margin:12px 0 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);transition:all .12s;margin-bottom:1px;border:1px solid transparent;user-select:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(108,99,255,.14);color:var(--accent2);border-color:rgba(108,99,255,.18)}
+.nav-icon{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+.sb-foot{padding:12px 16px;border-top:1px solid var(--border)}
+.sb-foot button{width:100%;font-size:12px;color:var(--text3);border-color:transparent;background:transparent}
+.sb-foot button:hover{color:var(--red);background:rgba(255,92,108,.08);border-color:rgba(255,92,108,.2)}
 
-/* KPIs */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px}
-.kpi{background:#fff;border:0.5px solid #ddd;border-radius:8px;padding:14px}
-.kpi-label{font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
-.kpi-val{font-size:24px;font-weight:500}
+/* MAIN */
+.main{margin-left:216px;flex:1;display:flex;flex-direction:column}
+.topbar{padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(15,15,17,.9);backdrop-filter:blur(8px);position:sticky;top:0;z-index:5}
+.page-title{font-size:15px;font-weight:600;letter-spacing:-.3px}
+.page-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.live{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green);background:rgba(45,212,160,.08);padding:5px 10px;border-radius:99px;border:1px solid rgba(45,212,160,.18)}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.content{padding:22px;flex:1}
 
-/* Cards / tables */
-.card{background:#fff;border:0.5px solid #ddd;border-radius:10px;padding:16px;margin-bottom:16px}
-.card-title{font-size:12px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:600px){.two-col{grid-template-columns:1fr}}
+/* KPIS */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--rl) var(--rl) 0 0}
+.kpi.t::after{background:linear-gradient(90deg,var(--accent),var(--blue))}
+.kpi.a::after{background:linear-gradient(90deg,var(--green),#1ba87a)}
+.kpi.d::after{background:linear-gradient(90deg,var(--blue),#2280dd)}
+.kpi.m::after{background:linear-gradient(90deg,var(--red),#dd2233)}
+.kpi-lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.kpi-n{font-size:26px;font-weight:600;letter-spacing:-.5px}
+.kpi-n.g{color:var(--green)}.kpi-n.b{color:var(--blue)}.kpi-n.r{color:var(--red)}
+
+/* CARDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:16px}
+.ctitle{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
+
+/* TABLE */
+.tw{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.th{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:8px 10px;font-size:11px;color:#888;border-bottom:0.5px solid #eee;text-transform:uppercase;letter-spacing:.04em;font-weight:500}
-td{padding:9px 10px;border-bottom:0.5px solid #f0f0ea;vertical-align:middle}
+th{text-align:left;padding:9px 14px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text2)}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:#fafaf7}
+tr:hover td{background:var(--bg3)}
+.tdm{color:var(--text);font-weight:500}
+.mono{font-family:'DM Mono',monospace;font-size:12px}
 
-/* Pills */
-.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:500}
-.pill.asignado{background:#eaf3de;color:#3b6d11}
-.pill.disponible{background:#e6f1fb;color:#185fa5}
-.pill.mantencion{background:#fcebeb;color:#a32d2d}
-.pill.baja{background:#f1efe8;color:#5f5e5a}
+/* PILLS */
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.pill.asignado{background:rgba(45,212,160,.1);color:var(--green);border:1px solid rgba(45,212,160,.2)}
+.pill.disponible{background:rgba(77,166,255,.1);color:var(--blue);border:1px solid rgba(77,166,255,.2)}
+.pill.mantencion{background:rgba(255,92,108,.1);color:var(--red);border:1px solid rgba(255,92,108,.2)}
+.pill.baja{background:rgba(152,152,170,.08);color:var(--text3);border:1px solid var(--border)}
+.pill.admin{background:rgba(108,99,255,.12);color:var(--accent2);border:1px solid rgba(108,99,255,.25)}
+.pill.operador{background:rgba(77,166,255,.1);color:var(--blue);border:1px solid rgba(77,166,255,.2)}
+.pill.auditor{background:rgba(245,166,35,.1);color:var(--amber);border:1px solid rgba(245,166,35,.2)}
+.pill.si{background:rgba(45,212,160,.1);color:var(--green);border:1px solid rgba(45,212,160,.2)}
+.pill.no{background:rgba(255,92,108,.08);color:var(--red);border:1px solid rgba(255,92,108,.18)}
 
-/* Bars */
-.bar-wrap{margin-bottom:8px}
-.bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;color:#666}
-.bar-track{height:5px;background:#f0f0ea;border-radius:3px;overflow:hidden}
-.bar-fill{height:5px;border-radius:3px}
+/* BARS */
+.brow{margin-bottom:9px}
+.bmeta{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px}
+.btrack{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.bfill{height:4px;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1)}
 
-/* Scan */
-.scan-box{border:1.5px dashed #ccc;border-radius:10px;padding:24px;text-align:center;cursor:pointer;color:#888;transition:background .15s;margin-bottom:12px}
-.scan-box:hover{background:#f5f5f0}
-.scan-icon{font-size:36px;margin-bottom:8px}
+/* MOV */
+.mrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.mrow:last-child{border-bottom:none}
+.mdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.mbody{flex:1;min-width:0}
+.mtitle{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msub{font-size:11px;color:var(--text3);margin-top:1px}
+.mtime{font-size:11px;color:var(--text3);flex-shrink:0}
 
-/* Audit */
-.audit-row{padding:10px 0;border-bottom:0.5px solid #f0f0ea;display:flex;gap:10px}
-.audit-row:last-child{border-bottom:none}
-.audit-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
-.audit-desc{font-size:13px;font-weight:500}
-.audit-meta{font-size:11px;color:#999;margin-top:2px}
+/* SCAN */
+.szone{border:1.5px dashed var(--border2);border-radius:var(--rl);padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px}
+.szone:hover,.szone.on{border-color:var(--accent);background:rgba(108,99,255,.04)}
+.szone-ico{font-size:36px;margin-bottom:6px}
+.scan-res{padding:12px;border-radius:var(--r);margin-bottom:10px;display:none}
+.scan-res.ok{background:rgba(45,212,160,.06);border:1px solid rgba(45,212,160,.18)}
+.scan-res.no{background:rgba(255,92,108,.06);border:1px solid rgba(255,92,108,.18)}
 
-/* Toast */
-.toast{position:fixed;bottom:20px;right:20px;background:#1a1a18;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
-.toast.show{opacity:1}
+/* FORM */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.full{grid-column:1/-1}
+.fl label{display:block;font-size:11px;font-weight:600;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.fl input,.fl select{width:100%}
 
-/* Mobile nav */
-@media(max-width:480px){
-  .nav{overflow-x:auto;padding-bottom:4px}
-  .content{padding:12px}
-  .kpi-val{font-size:20px}
-}
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.mo.open{display:flex}
+.md{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:22px;width:440px;max-width:92vw;box-shadow:0 24px 80px rgba(0,0,0,.7)}
+.md-title{font-size:14px;font-weight:600;letter-spacing:-.3px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+.md-title button{background:none;border:none;color:var(--text3);font-size:17px;padding:0;cursor:pointer}
+.md-title button:hover{color:var(--text)}
+.md-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+
+/* AUDIT */
+.arow{display:flex;gap:11px;padding:11px 16px;border-bottom:1px solid var(--border)}
+.arow:last-child{border-bottom:none}
+.adot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.abody{flex:1}
+.atitle{font-size:13px;font-weight:500;color:var(--text)}
+.ameta{font-size:11px;color:var(--text3);margin-top:2px}
+.aobs{font-size:12px;color:var(--text2);margin-top:3px;font-style:italic}
+
+/* USERS */
+.urow{display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--border);transition:background .1s}
+.urow:hover{background:var(--bg3)}
+.urow:last-child{border-bottom:none}
+.uav{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.uinfo{flex:1;min-width:0}
+.uname{font-size:13px;font-weight:500;color:var(--text)}
+.uemail{font-size:11px;color:var(--text3);margin-top:1px}
+.uacts{display:flex;gap:5px;margin-left:6px}
+.ibtn{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;padding:0}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:11px 16px;border-radius:var(--r);font-size:13px;font-weight:500;opacity:0;transform:translateY(6px);transition:all .22s;pointer-events:none;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{border-color:rgba(45,212,160,.3);color:var(--green)}
+.toast.err{border-color:rgba(255,92,108,.3);color:var(--red)}
+
+@media(max-width:680px){.sidebar{display:none}.main{margin-left:0}.kpis{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}.fg{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
 <!-- LOGIN -->
 <div id="login-screen">
+  <div class="login-glow"></div>
+  <div class="login-glow2"></div>
   <div class="login-card">
-    <div class="login-logo">📱 InvTech</div>
-    <h2>Inicia sesión</h2>
-    <div class="field"><label>Email</label><input type="email" id="login-email" value="admin@empresa.cl" autocomplete="username"></div>
-    <div class="field"><label>Contraseña</label><input type="password" id="login-pass" value="admin123" autocomplete="current-password"></div>
-    <div class="err" id="login-err">Email o contraseña incorrectos</div>
-    <button class="primary" style="width:100%;margin-top:14px" onclick="login()">Entrar</button>
-    <p style="font-size:11px;color:#aaa;margin-top:12px;text-align:center">Demo: admin@empresa.cl / admin123</p>
+    <div class="login-brand"><div class="brand-icon">📱</div><span class="brand-name">InvTech</span></div>
+    <p class="login-sub">Sistema de inventario de equipos telefónicos</p>
+    <div class="f"><label>Email</label><input type="email" id="le" placeholder="tu@empresa.cl" autocomplete="username"></div>
+    <div class="f"><label>Contraseña</label><input type="password" id="lp" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
+    <div class="login-err" id="lerr">Email o contraseña incorrectos</div>
+    <button class="primary" style="width:100%;margin-top:14px;padding:11px;font-size:14px" onclick="login()">Iniciar sesión</button>
   </div>
 </div>
 
 <!-- APP -->
-<div id="app" style="display:flex">
-  <div class="topbar">
-    <div class="topbar-left">
-      <span style="font-size:18px">📱</span>
-      <span class="logo">InvTech</span>
-      <span class="badge" id="badge-user"></span>
-    </div>
-    <button onclick="logout()" style="font-size:12px;color:#888;border:none;background:none">Cerrar sesión</button>
+<div id="app">
+  <div class="sidebar">
+    <div class="sb-top"><div class="sb-icon">📱</div><span class="sb-name">InvTech</span></div>
+    <div class="sb-user"><div class="sb-uname" id="sbn">—</div><div class="sb-urole"><div class="role-dot"></div><span id="sbr">—</span></div></div>
+    <nav class="sb-nav">
+      <div class="nav-sec">Principal</div>
+      <div class="nav-item active" onclick="showTab('dashboard',this)"><span class="nav-icon">◈</span>Dashboard</div>
+      <div class="nav-item" onclick="showTab('equipos',this)"><span class="nav-icon">◉</span>Equipos</div>
+      <div class="nav-item" onclick="showTab('asignar',this)"><span class="nav-icon">⊕</span>Escanear</div>
+      <div class="nav-sec">Registros</div>
+      <div class="nav-item" onclick="showTab('auditoria',this)"><span class="nav-icon">≡</span>Auditoría</div>
+      <div class="nav-item" id="nav-admin" style="display:none" onclick="showTab('admin',this)"><span class="nav-icon">⚙</span>Administración</div>
+    </nav>
+    <div class="sb-foot"><button onclick="logout()">Cerrar sesión</button></div>
   </div>
 
-  <div class="nav" id="nav">
-    <a class="active" onclick="showTab('dashboard',this)">📊 Dashboard</a>
-    <a onclick="showTab('equipos',this)">📱 Equipos</a>
-    <a onclick="showTab('asignar',this)">🔍 Escanear</a>
-    <a onclick="showTab('auditoria',this)">📋 Auditoría</a>
-  </div>
-
-  <div class="content">
-
-    <!-- DASHBOARD -->
-    <div id="tab-dashboard">
-      <div class="kpi-grid" id="kpi-grid">
-        <div class="kpi"><div class="kpi-label">Total</div><div class="kpi-val" id="kpi-total">—</div></div>
-        <div class="kpi"><div class="kpi-label">Asignados</div><div class="kpi-val" id="kpi-asignados" style="color:#3b6d11">—</div></div>
-        <div class="kpi"><div class="kpi-label">Disponibles</div><div class="kpi-val" id="kpi-disponibles" style="color:#185fa5">—</div></div>
-        <div class="kpi"><div class="kpi-label">Mantención</div><div class="kpi-val" id="kpi-mantencion" style="color:#a32d2d">—</div></div>
-      </div>
-      <div class="two-col">
-        <div class="card">
-          <div class="card-title">Movimientos recientes</div>
-          <div id="mov-recientes"><p style="color:#aaa;font-size:13px">Cargando...</p></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Equipos por área</div>
-          <div id="bars-area"><p style="color:#aaa;font-size:13px">Cargando...</p></div>
-        </div>
-      </div>
+  <div class="main">
+    <div class="topbar">
+      <div><div class="page-title" id="ptitle">Dashboard</div><div class="page-sub" id="psub">Resumen general del inventario</div></div>
+      <div class="live"><div class="live-dot"></div>En línea</div>
     </div>
+    <div class="content">
 
-    <!-- EQUIPOS -->
-    <div id="tab-equipos" style="display:none">
-      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-        <input type="text" id="eq-buscar" placeholder="Buscar por modelo, serie o usuario..." style="flex:1;min-width:180px" oninput="cargarEquipos()">
-        <select id="eq-estado" onchange="cargarEquipos()">
-          <option value="">Todos los estados</option>
-          <option value="disponible">Disponible</option>
-          <option value="asignado">Asignado</option>
-          <option value="mantencion">Mantención</option>
-          <option value="baja">Baja</option>
-        </select>
-        <button onclick="showModal('modal-nuevo-equipo')">+ Nuevo equipo</button>
-      </div>
-      <div class="card" style="padding:0;overflow:auto">
-        <table>
-          <thead><tr><th>Serie</th><th>Modelo</th><th>Área</th><th>Asignado a</th><th>Estado</th><th>Últ. movimiento</th></tr></thead>
-          <tbody id="tbody-equipos"><tr><td colspan="6" style="color:#aaa;padding:20px;text-align:center">Cargando...</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ESCANEAR / ASIGNAR -->
-    <div id="tab-asignar" style="display:none">
-      <div class="two-col">
-        <div class="card">
-          <div class="card-title">Escanear equipo</div>
-          <div class="scan-box" id="scan-area" onclick="document.getElementById('scan-input').focus()">
-            <div class="scan-icon">🔍</div>
-            <div style="font-size:13px">Conecta la pistola láser o escribe el número de serie</div>
-            <div style="font-size:11px;color:#bbb;margin-top:4px">El cursor ya está listo — escanea directamente</div>
-          </div>
-          <div style="display:flex;gap:8px;margin-bottom:12px">
-            <input type="text" id="scan-input" placeholder="Número de serie (ej: SN-0389)" style="flex:1;font-family:monospace" oninput="onScanInput(this.value)" autocomplete="off">
-            <button onclick="buscarSerie()">Buscar</button>
-          </div>
-          <div id="scan-result" style="display:none"></div>
+      <!-- DASHBOARD -->
+      <div id="tab-dashboard">
+        <div class="kpis">
+          <div class="kpi t"><div class="kpi-lbl">Total equipos</div><div class="kpi-n" id="k1">—</div></div>
+          <div class="kpi a"><div class="kpi-lbl">Asignados</div><div class="kpi-n g" id="k2">—</div></div>
+          <div class="kpi d"><div class="kpi-lbl">Disponibles</div><div class="kpi-n b" id="k3">—</div></div>
+          <div class="kpi m"><div class="kpi-lbl">Mantención</div><div class="kpi-n r" id="k4">—</div></div>
         </div>
-        <div class="card">
-          <div class="card-title">Registrar movimiento</div>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Serie del equipo</label>
-              <input type="text" id="f-serie" placeholder="SN-0000" style="width:100%;font-family:monospace"></div>
-            <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Tipo de movimiento</label>
-              <select id="f-tipo" style="width:100%">
-                <option value="asignacion">Asignación</option>
-                <option value="devolucion">Devolución</option>
-                <option value="mantencion">Mantención</option>
-                <option value="baja">Baja</option>
-              </select></div>
-            <div id="f-func-wrap"><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Funcionario</label>
-              <select id="f-func" style="width:100%"><option value="">Selecciona funcionario...</option></select></div>
-            <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Observación</label>
-              <input type="text" id="f-obs" placeholder="Condición, motivo..." style="width:100%"></div>
-            <button class="primary" onclick="registrarMovimiento()">✓ Registrar movimiento</button>
+        <div class="g2">
+          <div class="card"><div class="ctitle">Movimientos recientes</div><div id="movs"><p style="color:var(--text3);font-size:13px">Sin movimientos</p></div></div>
+          <div class="card"><div class="ctitle">Equipos por área</div><div id="bars"><p style="color:var(--text3);font-size:13px">Cargando...</p></div></div>
+        </div>
+      </div>
+
+      <!-- EQUIPOS -->
+      <div id="tab-equipos" style="display:none">
+        <div class="tw">
+          <div class="th">
+            <input type="text" id="eq-q" placeholder="Buscar serie, modelo, usuario..." style="flex:1;min-width:180px" oninput="cargarEquipos()">
+            <select id="eq-e" style="width:150px" onchange="cargarEquipos()">
+              <option value="">Todos</option><option value="disponible">Disponible</option><option value="asignado">Asignado</option><option value="mantencion">Mantención</option><option value="baja">Baja</option>
+            </select>
+            <button class="primary" onclick="openM('meq')">+ Nuevo equipo</button>
+          </div>
+          <table><thead><tr><th>Serie</th><th>Modelo</th><th>Área</th><th>Asignado a</th><th>Estado</th><th>Último mov.</th></tr></thead>
+          <tbody id="teq"><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:28px">Cargando...</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- ESCANEAR -->
+      <div id="tab-asignar" style="display:none">
+        <div class="g2">
+          <div class="card">
+            <div class="ctitle">Escanear equipo</div>
+            <div class="szone" id="sz" onclick="document.getElementById('si').focus()">
+              <div class="szone-ico">🔍</div>
+              <div style="font-size:13px;color:var(--text2)">Conecta la pistola láser o escribe la serie</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:3px">El campo está listo para recibir el escaneo</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+              <input type="text" id="si" placeholder="Número de serie..." class="mono" style="flex:1" oninput="onScan(this.value)" autocomplete="off">
+              <button onclick="buscarSerie()">Buscar</button>
+            </div>
+            <div class="scan-res" id="sr"></div>
+          </div>
+          <div class="card">
+            <div class="ctitle">Registrar movimiento</div>
+            <div style="display:flex;flex-direction:column;gap:11px">
+              <div class="fl"><label>Serie del equipo</label><input type="text" id="fs" class="mono" placeholder="SN-0000"></div>
+              <div class="fl"><label>Tipo de movimiento</label>
+                <select id="ft" onchange="toggleFunc()">
+                  <option value="asignacion">Asignación</option><option value="devolucion">Devolución</option><option value="mantencion">Mantención</option><option value="baja">Baja</option>
+                </select></div>
+              <div class="fl" id="ffw"><label>Funcionario</label><select id="ff"><option value="">Selecciona...</option></select></div>
+              <div class="fl"><label>Observación</label><input type="text" id="fo" placeholder="Condición, motivo..."></div>
+              <button class="primary" onclick="registrar()">Registrar movimiento</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- AUDITORÍA -->
-    <div id="tab-auditoria" style="display:none">
-      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-        <input type="text" id="aud-serie" placeholder="Filtrar por serie de equipo..." style="flex:1;min-width:180px">
-        <button onclick="cargarAuditoria()">Buscar</button>
-        <button onclick="exportarCSV()">⬇ Exportar CSV</button>
+      <!-- AUDITORÍA -->
+      <div id="tab-auditoria" style="display:none">
+        <div class="tw">
+          <div class="th">
+            <input type="text" id="as" placeholder="Filtrar por serie..." class="mono" style="width:200px">
+            <button onclick="cargarAudit()">Buscar</button>
+            <button onclick="exportCSV()">↓ CSV</button>
+          </div>
+          <div id="alist"><p style="color:var(--text3);padding:20px">Cargando...</p></div>
+        </div>
       </div>
-      <div class="card">
-        <div id="audit-log"><p style="color:#aaa;font-size:13px">Cargando...</p></div>
-      </div>
-    </div>
 
+      <!-- ADMIN -->
+      <div id="tab-admin" style="display:none">
+        <div class="g2" style="align-items:start">
+          <div class="tw">
+            <div class="th" style="justify-content:space-between">
+              <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">Usuarios del sistema</span>
+              <button class="primary" onclick="openM('mnu')">+ Nuevo usuario</button>
+            </div>
+            <div id="ulist"><p style="color:var(--text3);padding:20px">Cargando...</p></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="card">
+              <div class="ctitle">Cambiar mi contraseña</div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div class="fl"><label>Contraseña actual</label><input type="password" id="pwa"></div>
+                <div class="fl"><label>Nueva contraseña</label><input type="password" id="pwn"></div>
+                <div class="fl"><label>Confirmar nueva</label><input type="password" id="pwc"></div>
+                <button class="primary" onclick="cambiarPass()">Actualizar contraseña</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="ctitle">Sistema</div>
+              <div style="font-size:12px;color:var(--text2);line-height:2.1">
+                <div>Versión: <span style="color:var(--text)">1.0.0</span></div>
+                <div>Base de datos: <span style="color:var(--green)">PostgreSQL · Neon ✓</span></div>
+                <div>Servidor: <span style="color:var(--green)">Railway · Online ✓</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 
-<!-- MODAL nuevo equipo -->
-<div id="modal-nuevo-equipo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:12px;padding:24px;width:400px;max-width:90vw">
-    <h3 style="font-size:15px;margin-bottom:16px">Nuevo equipo</h3>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div style="grid-column:1/-1"><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Número de serie *</label><input type="text" id="ne-serie" placeholder="SN-0000" style="width:100%;font-family:monospace"></div>
-      <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Modelo *</label><input type="text" id="ne-modelo" placeholder="iPhone 15 Pro" style="width:100%"></div>
-      <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Marca</label><input type="text" id="ne-marca" placeholder="Apple" style="width:100%"></div>
-      <div style="grid-column:1/-1"><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">IMEI</label><input type="text" id="ne-imei" placeholder="350000000000000" style="width:100%;font-family:monospace"></div>
-      <div style="grid-column:1/-1"><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Notas</label><input type="text" id="ne-notas" placeholder="Estado inicial, accesorios..." style="width:100%"></div>
+<!-- MODAL: Nuevo equipo -->
+<div class="mo" id="meq">
+  <div class="md">
+    <div class="md-title">Nuevo equipo <button onclick="closeM('meq')">✕</button></div>
+    <div class="fg">
+      <div class="fl full"><label>Número de serie *</label><input type="text" id="nes" class="mono" placeholder="SN-0000"></div>
+      <div class="fl"><label>Modelo *</label><input type="text" id="nem" placeholder="iPhone 15 Pro"></div>
+      <div class="fl"><label>Marca</label><input type="text" id="nemk" placeholder="Apple"></div>
+      <div class="fl full"><label>IMEI</label><input type="text" id="nei" class="mono" placeholder="350000000000000"></div>
+      <div class="fl full"><label>Notas</label><input type="text" id="nen" placeholder="Estado inicial, accesorios..."></div>
     </div>
-    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
-      <button onclick="hideModal('modal-nuevo-equipo')">Cancelar</button>
-      <button class="primary" onclick="crearEquipo()">Crear equipo</button>
+    <div class="md-footer"><button onclick="closeM('meq')">Cancelar</button><button class="primary" onclick="crearEquipo()">Crear equipo</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Nuevo usuario -->
+<div class="mo" id="mnu">
+  <div class="md">
+    <div class="md-title">Nuevo usuario <button onclick="closeM('mnu')">✕</button></div>
+    <div class="fg">
+      <div class="fl full"><label>Nombre completo *</label><input type="text" id="nun" placeholder="Juan Pérez"></div>
+      <div class="fl full"><label>Email *</label><input type="email" id="nue" placeholder="juan@empresa.cl"></div>
+      <div class="fl"><label>Contraseña *</label><input type="password" id="nup"></div>
+      <div class="fl"><label>Rol *</label><select id="nur"><option value="operador">Operador</option><option value="auditor">Auditor</option><option value="admin">Administrador</option></select></div>
     </div>
+    <div style="margin-top:12px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2)">
+      <strong style="color:var(--text)">Roles:</strong> Admin = acceso total · Operador = asignar y devolver · Auditor = solo lectura
+    </div>
+    <div class="md-footer"><button onclick="closeM('mnu')">Cancelar</button><button class="primary" onclick="crearUsuario()">Crear usuario</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Editar usuario -->
+<div class="mo" id="meu">
+  <div class="md">
+    <div class="md-title">Editar usuario <button onclick="closeM('meu')">✕</button></div>
+    <input type="hidden" id="euid">
+    <div class="fg">
+      <div class="fl full"><label>Nombre</label><input type="text" id="eun"></div>
+      <div class="fl full"><label>Email</label><input type="email" id="eue"></div>
+      <div class="fl"><label>Rol</label><select id="eur"><option value="operador">Operador</option><option value="auditor">Auditor</option><option value="admin">Administrador</option></select></div>
+      <div class="fl"><label>Estado</label><select id="eua"><option value="true">Activo</option><option value="false">Inactivo</option></select></div>
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Resetear contraseña</div>
+      <div style="display:flex;gap:8px">
+        <input type="password" id="eunp" placeholder="Nueva contraseña (dejar vacío para no cambiar)" style="flex:1">
+        <button onclick="resetPass()">Cambiar</button>
+      </div>
+    </div>
+    <div class="md-footer"><button onclick="closeM('meu')">Cancelar</button><button class="primary" onclick="guardarUsuario()">Guardar cambios</button></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const API = '';
-let token = localStorage.getItem('invtech_token');
-let userData = JSON.parse(localStorage.getItem('invtech_user') || 'null');
+let token=localStorage.getItem('it_tok'),userData=JSON.parse(localStorage.getItem('it_usr')||'null');
+const API=path=>fetch('/api'+path,{headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}}).then(r=>r.json());
+const AAPI=(path,opts)=>fetch('/api'+path,{...opts,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,...(opts?.headers||{})}}).then(r=>r.json());
+function toast(msg,t='ok',d=3000){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show '+t;setTimeout(()=>el.className='toast',d)}
+function openM(id){document.getElementById(id).classList.add('open')}
+function closeM(id){document.getElementById(id).classList.remove('open')}
 
-function api(path, opts={}) {
-  return fetch(API + '/api' + path, {
-    ...opts,
-    headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token, ...(opts.headers||{}) }
-  }).then(r => r.json());
-}
+async function login(){
+  const e=document.getElementById('le').value,p=document.getElementById('lp').value;
+  const err=document.getElementById('lerr');err.style.display='none';
+  try{const d=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,password:p})}).then(r=>r.json());
+  if(d.error){err.style.display='block';return}
+  token=d.token;userData=d.usuario;localStorage.setItem('it_tok',token);localStorage.setItem('it_usr',JSON.stringify(userData));initApp()}
+  catch{err.style.display='block'}}
 
-function toast(msg, dur=3000) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), dur);
-}
+function logout(){localStorage.removeItem('it_tok');localStorage.removeItem('it_usr');document.getElementById('app').style.display='none';document.getElementById('login-screen').style.display='flex'}
 
-function showModal(id) { document.getElementById(id).style.display='flex'; }
-function hideModal(id) { document.getElementById(id).style.display='none'; }
+function initApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('sbn').textContent=userData.nombre;
+  document.getElementById('sbr').textContent=userData.rol;
+  if(userData.rol==='admin')document.getElementById('nav-admin').style.display='flex';
+  cargarDash();cargarFuncs()}
 
-// LOGIN
-async function login() {
-  const email = document.getElementById('login-email').value;
-  const pass = document.getElementById('login-pass').value;
-  const err = document.getElementById('login-err');
-  err.style.display = 'none';
-  try {
-    const data = await fetch('/api/auth/login', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({email, password: pass})
-    }).then(r => r.json());
-    if (data.error) { err.style.display='block'; return; }
-    token = data.token;
-    userData = data.usuario;
-    localStorage.setItem('invtech_token', token);
-    localStorage.setItem('invtech_user', JSON.stringify(userData));
-    initApp();
-  } catch { err.textContent = 'Error de conexión'; err.style.display='block'; }
-}
+async function cargarDash(){
+  const d=await API('/equipos/stats/resumen');
+  if(d.kpis){document.getElementById('k1').textContent=d.kpis.total;document.getElementById('k2').textContent=d.kpis.asignados;document.getElementById('k3').textContent=d.kpis.disponibles;document.getElementById('k4').textContent=d.kpis.mantencion}
+  if(d.por_area){const max=Math.max(...d.por_area.map(a=>+a.cantidad),1);const c=['#6c63ff','#2dd4a0','#4da6ff','#f5a623','#ff5c6c'];
+  document.getElementById('bars').innerHTML=d.por_area.map((a,i)=>`<div class="brow"><div class="bmeta"><span>${a.area}</span><span>${a.cantidad}</span></div><div class="btrack"><div class="bfill" style="width:${Math.round(+a.cantidad/max*100)}%;background:${c[i%c.length]}"></div></div></div>`).join('')||'<p style="color:var(--text3);font-size:13px">Sin datos</p>'}
+  const m=await API('/asignaciones?limit=8');
+  const dc={asignacion:'var(--green)',devolucion:'var(--amber)',mantencion:'var(--red)',baja:'var(--text3)'};
+  document.getElementById('movs').innerHTML=m.map?m.map(v=>`<div class="mrow"><div class="mdot" style="background:${dc[v.tipo]||'var(--text3)'}"></div><div class="mbody"><div class="mtitle">${v.modelo} · <span class="mono">${v.numero_serie}</span></div><div class="msub">${v.tipo} — ${v.funcionario||'—'} · ${v.registrado_por}</div></div><div class="mtime">${ff(v.fecha)}</div></div>`).join(''):'<p style="color:var(--text3);font-size:13px">Sin movimientos aún</p>'}
 
-function logout() {
-  localStorage.removeItem('invtech_token');
-  localStorage.removeItem('invtech_user');
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-}
+async function cargarEquipos(){
+  const q=document.getElementById('eq-q').value,e=document.getElementById('eq-e').value;
+  let url='/equipos?';if(q)url+='q='+encodeURIComponent(q)+'&';if(e)url+='estado='+e;
+  const d=await API(url);const t=document.getElementById('teq');
+  if(!d.length){t.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:28px">Sin resultados</td></tr>';return}
+  t.innerHTML=d.map(e=>`<tr><td class="mono">${e.numero_serie}</td><td class="tdm">${e.modelo}</td><td>${e.area||'—'}</td><td>${e.asignado_a||'—'}</td><td><span class="pill ${e.estado}">${e.estado}</span></td><td style="color:var(--text3)">${e.ultimo_movimiento?ff(e.ultimo_movimiento):'—'}</td></tr>`).join('')}
 
-function initApp() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  document.getElementById('badge-user').textContent = userData.nombre + ' · ' + userData.rol;
-  cargarDashboard();
-  cargarFuncionarios();
-}
+async function crearEquipo(){
+  const b={numero_serie:document.getElementById('nes').value,modelo:document.getElementById('nem').value,marca:document.getElementById('nemk').value,imei:document.getElementById('nei').value,notas:document.getElementById('nen').value};
+  if(!b.numero_serie||!b.modelo){toast('Serie y modelo requeridos','err');return}
+  const r=await AAPI('/equipos',{method:'POST',body:JSON.stringify(b)});
+  if(r.error){toast(r.error,'err');return}closeM('meq');toast('✓ Equipo creado');cargarEquipos();cargarDash()}
 
-// DASHBOARD
-async function cargarDashboard() {
-  const data = await api('/equipos/stats/resumen');
-  if (data.kpis) {
-    document.getElementById('kpi-total').textContent = data.kpis.total;
-    document.getElementById('kpi-asignados').textContent = data.kpis.asignados;
-    document.getElementById('kpi-disponibles').textContent = data.kpis.disponibles;
-    document.getElementById('kpi-mantencion').textContent = data.kpis.mantencion;
-  }
-  if (data.por_area) {
-    const max = Math.max(...data.por_area.map(a => Number(a.cantidad)), 1);
-    const colors = ['#378ADD','#1D9E75','#EF9F27','#7F77DD','#D4537E'];
-    document.getElementById('bars-area').innerHTML = data.por_area.map((a,i) => `
-      <div class="bar-wrap">
-        <div class="bar-label"><span>${a.area}</span><span>${a.cantidad}</span></div>
-        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(Number(a.cantidad)/max*100)}%;background:${colors[i%colors.length]}"></div></div>
-      </div>`).join('');
-  }
-  const movs = await api('/asignaciones?limit=6');
-  const tipoIcon = {asignacion:'🟢',devolucion:'🟡',mantencion:'🔴',baja:'⚫'};
-  document.getElementById('mov-recientes').innerHTML = movs.map ? movs.map(m => `
-    <div class="audit-row">
-      <div style="margin-top:3px">${tipoIcon[m.tipo]||'⚪'}</div>
-      <div>
-        <div class="audit-desc">${m.modelo} · ${m.numero_serie}</div>
-        <div class="audit-meta">${m.tipo} — ${m.funcionario || '—'} · ${m.registrado_por} · ${fmtFecha(m.fecha)}</div>
-      </div>
-    </div>`).join('') : '<p style="color:#aaa;font-size:13px">Sin movimientos aún</p>';
-}
+let stimer;
+function onScan(v){document.getElementById('sz').classList.add('on');clearTimeout(stimer);if(v.length>=5)stimer=setTimeout(buscarSerie,400)}
+async function buscarSerie(){
+  const s=document.getElementById('si').value.trim().toUpperCase();if(!s)return;
+  const d=await API('/equipos/serie/'+encodeURIComponent(s));const b=document.getElementById('sr');
+  if(d.error){b.className='scan-res no';b.innerHTML=`<div style="color:var(--red);font-size:13px">✕ No encontrado: ${s}</div>`}
+  else{b.className='scan-res ok';b.innerHTML=`<div style="color:var(--green);font-size:11px;font-weight:700;margin-bottom:5px">✓ EQUIPO ENCONTRADO</div><div style="font-weight:500">${d.modelo}</div><div style="font-size:12px;color:var(--text2);margin-top:3px"><span class="mono">${d.numero_serie}</span> · <span class="pill ${d.estado}">${d.estado}</span></div><div style="font-size:12px;color:var(--text2);margin-top:2px">${d.area||'Sin área'} · ${d.asignado_a||'Sin asignar'}</div>`;
+  document.getElementById('fs').value=d.numero_serie}b.style.display='block'}
 
-// EQUIPOS
-async function cargarEquipos() {
-  const q = document.getElementById('eq-buscar').value;
-  const estado = document.getElementById('eq-estado').value;
-  let url = '/equipos?';
-  if (q) url += 'q=' + encodeURIComponent(q) + '&';
-  if (estado) url += 'estado=' + estado;
-  const data = await api(url);
-  const tbody = document.getElementById('tbody-equipos');
-  if (!data.length) { tbody.innerHTML='<tr><td colspan="6" style="color:#aaa;padding:20px;text-align:center">Sin resultados</td></tr>'; return; }
-  tbody.innerHTML = data.map(e => `
-    <tr>
-      <td style="font-family:monospace;font-size:12px">${e.numero_serie}</td>
-      <td style="font-weight:500">${e.modelo}</td>
-      <td>${e.area || '—'}</td>
-      <td>${e.asignado_a || '—'}</td>
-      <td><span class="pill ${e.estado}">${e.estado}</span></td>
-      <td style="font-size:12px;color:#aaa">${e.ultimo_movimiento ? fmtFecha(e.ultimo_movimiento) : '—'}</td>
-    </tr>`).join('');
-}
+function toggleFunc(){const t=document.getElementById('ft').value;document.getElementById('ffw').style.display=(t==='devolucion'||t==='baja')?'none':'block'}
+async function cargarFuncs(){const d=await API('/funcionarios');if(d&&d.map){const s=document.getElementById('ff');s.innerHTML='<option value="">Selecciona...</option>'+d.map(f=>`<option value="${f.id}">${f.nombre}${f.area?' · '+f.area:''}</option>`).join('')}}
 
-async function crearEquipo() {
-  const body = {
-    numero_serie: document.getElementById('ne-serie').value,
-    modelo: document.getElementById('ne-modelo').value,
-    marca: document.getElementById('ne-marca').value,
-    imei: document.getElementById('ne-imei').value,
-    notas: document.getElementById('ne-notas').value
-  };
-  if (!body.numero_serie || !body.modelo) { toast('Serie y modelo son requeridos'); return; }
-  const res = await api('/equipos', {method:'POST', body: JSON.stringify(body)});
-  if (res.error) { toast('Error: ' + res.error); return; }
-  hideModal('modal-nuevo-equipo');
-  toast('Equipo creado correctamente');
-  cargarEquipos();
-}
+async function registrar(){
+  const s=document.getElementById('fs').value.trim().toUpperCase();const t=document.getElementById('ft').value;
+  if(!s){toast('Ingresa o escanea una serie','err');return}
+  const eq=await API('/equipos/serie/'+encodeURIComponent(s));if(eq.error){toast('Serie no encontrada','err');return}
+  const b={equipo_id:eq.id,tipo:t,observacion:document.getElementById('fo').value};
+  const fi=document.getElementById('ff').value;if(fi)b.funcionario_id=parseInt(fi);
+  const r=await AAPI('/asignaciones',{method:'POST',body:JSON.stringify(b)});
+  if(r.error){toast(r.error,'err');return}toast('✓ '+r.mensaje);
+  document.getElementById('fs').value='';document.getElementById('si').value='';document.getElementById('fo').value='';document.getElementById('sr').style.display='none';document.getElementById('sz').classList.remove('on');cargarDash()}
 
-// ESCANEAR
-let scanTimer;
-function onScanInput(val) {
-  clearTimeout(scanTimer);
-  if (val.length >= 5) scanTimer = setTimeout(buscarSerie, 400);
-}
+async function cargarAudit(){
+  const s=document.getElementById('as').value.trim().toUpperCase();let url='/asignaciones?limit=100';
+  if(s){const eq=await API('/equipos/serie/'+encodeURIComponent(s));if(eq.id)url+='&equipo_id='+eq.id}
+  const d=await API(url);const dc={asignacion:'var(--green)',devolucion:'var(--amber)',mantencion:'var(--red)',baja:'var(--text3)'};
+  document.getElementById('alist').innerHTML=d.map?d.map(a=>`<div class="arow"><div class="adot" style="background:${dc[a.tipo]||'var(--text3)'}"></div><div class="abody"><div class="atitle">${a.tipo.toUpperCase()} — ${a.modelo} <span class="mono" style="font-size:11px;color:var(--text3)">${a.numero_serie}</span></div><div class="ameta">${a.funcionario?'Funcionario: '+a.funcionario+' · ':''}Por <strong style="color:var(--text2)">${a.registrado_por}</strong> · ${ff(a.fecha)}</div>${a.observacion?`<div class="aobs">"${a.observacion}"</div>`:''}</div><span class="pill ${a.tipo==='asignacion'?'asignado':a.tipo==='devolucion'?'disponible':a.tipo==='mantencion'?'mantencion':'baja'}">${a.tipo}</span></div>`).join(''):'<p style="color:var(--text3);padding:20px">Sin registros</p>'}
 
-async function buscarSerie() {
-  const serie = document.getElementById('scan-input').value.trim().toUpperCase();
-  if (!serie) return;
-  const data = await api('/equipos/serie/' + encodeURIComponent(serie));
-  const box = document.getElementById('scan-result');
-  if (data.error) {
-    box.innerHTML = `<div style="color:#a32d2d;font-size:13px;padding:10px;background:#fcebeb;border-radius:8px">❌ ${data.error}</div>`;
-  } else {
-    box.innerHTML = `
-      <div style="padding:12px;background:#eaf3de;border-radius:8px;border:0.5px solid #97c459">
-        <div style="font-size:12px;color:#3b6d11;margin-bottom:6px">✓ Equipo encontrado</div>
-        <div style="font-weight:500">${data.modelo}</div>
-        <div style="font-size:12px;color:#666;margin-top:2px">Serie: ${data.numero_serie} · Estado: <span class="pill ${data.estado}">${data.estado}</span></div>
-        <div style="font-size:12px;color:#666;margin-top:2px">Área: ${data.area||'—'} · Asignado a: ${data.asignado_a||'—'}</div>
-      </div>`;
-    document.getElementById('f-serie').value = data.numero_serie;
-  }
-  box.style.display = 'block';
-}
+function exportCSV(){API('/asignaciones?limit=1000').then(d=>{if(!d.map)return;const h='fecha,tipo,numero_serie,modelo,funcionario,registrado_por,observacion';const r=d.map(a=>[ff(a.fecha),a.tipo,a.numero_serie,a.modelo,a.funcionario||'',a.registrado_por,a.observacion||''].join(','));const b=new Blob([[h,...r].join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='auditoria.csv';a.click();toast('✓ CSV exportado')})}
 
-async function cargarFuncionarios() {
-  const data = await api('/funcionarios');
-  const sel = document.getElementById('f-func');
-  if (data && data.map) {
-    sel.innerHTML = '<option value="">Selecciona funcionario...</option>' +
-      data.map(f => `<option value="${f.id}">${f.nombre} · ${f.area||'Sin área'}</option>`).join('');
-  }
-  document.getElementById('f-tipo').addEventListener('change', function() {
-    document.getElementById('f-func-wrap').style.display =
-      (this.value === 'devolucion' || this.value === 'baja') ? 'none' : 'block';
-  });
-}
+async function cargarUsuarios(){
+  const d=await API('/usuarios');if(d.error){document.getElementById('ulist').innerHTML=`<p style="color:var(--red);padding:20px">${d.error}</p>`;return}
+  const ac=['#6c63ff','#2dd4a0','#4da6ff','#f5a623','#ff5c6c'];
+  document.getElementById('ulist').innerHTML=d.map((u,i)=>`<div class="urow"><div class="uav" style="background:${ac[i%ac.length]}18;color:${ac[i%ac.length]}">${u.nombre.charAt(0).toUpperCase()}</div><div class="uinfo"><div class="uname">${u.nombre}</div><div class="uemail">${u.email}</div></div><span class="pill ${u.rol}">${u.rol}</span><span class="pill ${u.activo?'si':'no'}" style="margin-left:5px">${u.activo?'Activo':'Inactivo'}</span><div class="uacts"><button class="ibtn" onclick='editU(${JSON.stringify(u)})' title="Editar">✏</button>${u.id!==(userData?.id||0)?`<button class="ibtn danger" onclick="toggleU(${u.id},${u.activo})" title="${u.activo?'Desactivar':'Activar'}">${u.activo?'⊘':'✓'}</button>`:''}</div></div>`).join('')}
 
-async function registrarMovimiento() {
-  const serie = document.getElementById('f-serie').value.trim().toUpperCase();
-  const tipo = document.getElementById('f-tipo').value;
-  const funcId = document.getElementById('f-func').value;
-  const obs = document.getElementById('f-obs').value;
-  if (!serie) { toast('Ingresa o escanea un número de serie'); return; }
+function editU(u){document.getElementById('euid').value=u.id;document.getElementById('eun').value=u.nombre;document.getElementById('eue').value=u.email;document.getElementById('eur').value=u.rol;document.getElementById('eua').value=String(u.activo);document.getElementById('eunp').value='';openM('meu')}
 
-  const eq = await api('/equipos/serie/' + encodeURIComponent(serie));
-  if (eq.error) { toast('Serie no encontrada: ' + serie); return; }
+async function guardarUsuario(){
+  const id=document.getElementById('euid').value;
+  const b={nombre:document.getElementById('eun').value,email:document.getElementById('eue').value,rol:document.getElementById('eur').value,activo:document.getElementById('eua').value==='true'};
+  const r=await AAPI('/usuarios/'+id,{method:'PUT',body:JSON.stringify(b)});
+  if(r.error){toast(r.error,'err');return}closeM('meu');toast('✓ Usuario actualizado');cargarUsuarios()}
 
-  const body = { equipo_id: eq.id, tipo, observacion: obs };
-  if (funcId) body.funcionario_id = parseInt(funcId);
+async function resetPass(){
+  const id=document.getElementById('euid').value,p=document.getElementById('eunp').value;
+  if(!p){toast('Ingresa la nueva contraseña','err');return}
+  const r=await AAPI('/usuarios/'+id+'/password',{method:'PUT',body:JSON.stringify({password_nuevo:p})});
+  if(r.error){toast(r.error,'err');return}toast('✓ Contraseña actualizada');document.getElementById('eunp').value=''}
 
-  const res = await api('/asignaciones', {method:'POST', body: JSON.stringify(body)});
-  if (res.error) { toast('Error: ' + res.error); return; }
-  toast('✓ ' + res.mensaje);
-  document.getElementById('f-serie').value = '';
-  document.getElementById('scan-input').value = '';
-  document.getElementById('scan-result').style.display = 'none';
-  document.getElementById('f-obs').value = '';
-  cargarDashboard();
-}
+async function toggleU(id,activo){
+  if(!confirm(activo?'¿Desactivar este usuario?':'¿Reactivar este usuario?'))return;
+  const r=activo?await AAPI('/usuarios/'+id,{method:'DELETE'}):await AAPI('/usuarios/'+id,{method:'PUT',body:JSON.stringify({activo:true})});
+  if(r.error){toast(r.error,'err');return}toast('✓ Usuario actualizado');cargarUsuarios()}
 
-// AUDITORÍA
-async function cargarAuditoria() {
-  const serie = document.getElementById('aud-serie').value.trim().toUpperCase();
-  let url = '/asignaciones?limit=100';
-  if (serie) {
-    const eq = await api('/equipos/serie/' + encodeURIComponent(serie));
-    if (eq.id) url += '&equipo_id=' + eq.id;
-  }
-  const data = await api(url);
-  const tipoColor = {asignacion:'#3b6d11',devolucion:'#854f0b',mantencion:'#a32d2d',baja:'#5f5e5a'};
-  const tipoBg = {asignacion:'#eaf3de',devolucion:'#faeeda',mantencion:'#fcebeb',baja:'#f1efe8'};
-  document.getElementById('audit-log').innerHTML = data.map ? data.map(a => `
-    <div class="audit-row">
-      <div class="audit-dot" style="background:${tipoColor[a.tipo]||'#888'}"></div>
-      <div style="flex:1">
-        <div class="audit-desc">${a.tipo.toUpperCase()} — ${a.modelo} · <span style="font-family:monospace;font-size:12px">${a.numero_serie}</span></div>
-        <div class="audit-meta">${a.funcionario ? 'Funcionario: ' + a.funcionario + ' · ' : ''}Registrado por ${a.registrado_por} · ${fmtFecha(a.fecha)}</div>
-        ${a.observacion ? `<div style="font-size:12px;color:#888;margin-top:2px">${a.observacion}</div>` : ''}
-      </div>
-      <span class="pill" style="background:${tipoBg[a.tipo]};color:${tipoColor[a.tipo]}">${a.tipo}</span>
-    </div>`).join('') : '<p style="color:#aaa">Sin registros</p>';
-}
+async function crearUsuario(){
+  const b={nombre:document.getElementById('nun').value,email:document.getElementById('nue').value,password:document.getElementById('nup').value,rol:document.getElementById('nur').value};
+  if(!b.nombre||!b.email||!b.password){toast('Completa todos los campos','err');return}
+  const r=await AAPI('/usuarios',{method:'POST',body:JSON.stringify(b)});
+  if(r.error){toast(r.error,'err');return}closeM('mnu');toast('✓ Usuario creado');['nun','nue','nup'].forEach(id=>document.getElementById(id).value='');cargarUsuarios()}
 
-function exportarCSV() {
-  api('/asignaciones?limit=1000').then(data => {
-    if (!data.map) return;
-    const header = 'fecha,tipo,numero_serie,modelo,funcionario,registrado_por,observacion';
-    const rows = data.map(a =>
-      [fmtFecha(a.fecha),a.tipo,a.numero_serie,a.modelo,a.funcionario||'',a.registrado_por,a.observacion||''].join(',')
-    );
-    const csv = [header,...rows].join('\n');
-    const blob = new Blob([csv], {type:'text/csv'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href=url; a.download='auditoria_invtech.csv'; a.click();
-  });
-}
+async function cambiarPass(){
+  const a=document.getElementById('pwa').value,n=document.getElementById('pwn').value,c=document.getElementById('pwc').value;
+  if(!a||!n){toast('Completa todos los campos','err');return}if(n!==c){toast('Las contraseñas no coinciden','err');return}if(n.length<6){toast('Mínimo 6 caracteres','err');return}
+  const r=await AAPI('/usuarios/'+userData.id+'/password',{method:'PUT',body:JSON.stringify({password_actual:a,password_nuevo:n})});
+  if(r.error){toast(r.error,'err');return}toast('✓ Contraseña actualizada');['pwa','pwn','pwc'].forEach(id=>document.getElementById(id).value='')}
 
-function fmtFecha(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  const hoy = new Date();
-  if (d.toDateString() === hoy.toDateString()) return 'Hoy ' + d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
-  return d.toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
-}
+const ptitles={dashboard:['Dashboard','Resumen general del inventario'],equipos:['Equipos','Gestión de equipos telefónicos'],asignar:['Escanear / Asignar','Registra movimientos rápidos con pistola láser'],auditoria:['Auditoría','Historial completo de movimientos'],admin:['Administración','Usuarios, contraseñas y configuración del sistema']};
 
-function showTab(name, el) {
-  ['dashboard','equipos','asignar','auditoria'].forEach(t => document.getElementById('tab-'+t).style.display='none');
-  document.getElementById('tab-'+name).style.display = 'block';
-  document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
-  if (el) el.classList.add('active');
-  if (name === 'equipos') cargarEquipos();
-  if (name === 'auditoria') cargarAuditoria();
-}
+function showTab(name,el){
+  ['dashboard','equipos','asignar','auditoria','admin'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  document.getElementById('tab-'+name).style.display='block';
+  document.querySelectorAll('.nav-item').forEach(a=>a.classList.remove('active'));if(el)el.classList.add('active');
+  const[tt,st]=ptitles[name]||['',''];document.getElementById('ptitle').textContent=tt;document.getElementById('psub').textContent=st;
+  if(name==='equipos')cargarEquipos();if(name==='auditoria')cargarAudit();if(name==='admin')cargarUsuarios()}
 
-// Auto-login si hay token guardado
-if (token && userData) initApp();
+function ff(iso){if(!iso)return'—';const d=new Date(iso),h=new Date();
+  if(d.toDateString()===h.toDateString())return'Hoy '+d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '+d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}
+
+if(token&&userData)initApp();
 </script>
 </body>
 </html>
