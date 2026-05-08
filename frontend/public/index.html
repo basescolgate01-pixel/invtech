@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvTech · Inventario de Equipos</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;background:#f5f5f0;color:#1a1a18;min-height:100vh}
+a{color:inherit;text-decoration:none}
+input,select,textarea{font-family:inherit;font-size:13px;padding:7px 10px;border:0.5px solid #ccc;border-radius:6px;background:#fff;color:#1a1a18;outline:none;transition:border .15s}
+input:focus,select:focus{border-color:#378ADD}
+button{font-family:inherit;font-size:13px;padding:7px 14px;border:0.5px solid #ccc;border-radius:6px;background:#fff;cursor:pointer;transition:background .15s}
+button:hover{background:#f0efe8}
+button.primary{background:#1a1a18;color:#fff;border-color:#1a1a18}
+button.primary:hover{background:#333}
+
+/* Login */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f5f5f0}
+.login-card{background:#fff;border:0.5px solid #ddd;border-radius:12px;padding:32px;width:340px}
+.login-logo{font-size:20px;font-weight:500;margin-bottom:24px;display:flex;align-items:center;gap:8px}
+.login-card h2{font-size:16px;font-weight:500;margin-bottom:20px;color:#555}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:#666;margin-bottom:4px}
+.field input{width:100%}
+.err{color:#c0392b;font-size:12px;margin-top:8px;display:none}
+
+/* App */
+#app{display:none;min-height:100vh;flex-direction:column}
+.topbar{background:#fff;border-bottom:0.5px solid #ddd;padding:10px 20px;display:flex;align-items:center;justify-content:space-between}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.logo{font-size:15px;font-weight:500}
+.badge{font-size:11px;background:#e6f1fb;color:#185fa5;padding:3px 9px;border-radius:99px}
+.nav{background:#fafaf7;border-bottom:0.5px solid #ddd;padding:6px 20px;display:flex;gap:4px}
+.nav a{padding:5px 12px;border-radius:6px;font-size:13px;color:#666;cursor:pointer;display:flex;align-items:center;gap:5px;border:0.5px solid transparent}
+.nav a.active{background:#fff;color:#1a1a18;border-color:#ddd;font-weight:500}
+.content{padding:20px;flex:1}
+
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px}
+.kpi{background:#fff;border:0.5px solid #ddd;border-radius:8px;padding:14px}
+.kpi-label{font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.kpi-val{font-size:24px;font-weight:500}
+
+/* Cards / tables */
+.card{background:#fff;border:0.5px solid #ddd;border-radius:10px;padding:16px;margin-bottom:16px}
+.card-title{font-size:12px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.two-col{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;font-size:11px;color:#888;border-bottom:0.5px solid #eee;text-transform:uppercase;letter-spacing:.04em;font-weight:500}
+td{padding:9px 10px;border-bottom:0.5px solid #f0f0ea;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf7}
+
+/* Pills */
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:500}
+.pill.asignado{background:#eaf3de;color:#3b6d11}
+.pill.disponible{background:#e6f1fb;color:#185fa5}
+.pill.mantencion{background:#fcebeb;color:#a32d2d}
+.pill.baja{background:#f1efe8;color:#5f5e5a}
+
+/* Bars */
+.bar-wrap{margin-bottom:8px}
+.bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;color:#666}
+.bar-track{height:5px;background:#f0f0ea;border-radius:3px;overflow:hidden}
+.bar-fill{height:5px;border-radius:3px}
+
+/* Scan */
+.scan-box{border:1.5px dashed #ccc;border-radius:10px;padding:24px;text-align:center;cursor:pointer;color:#888;transition:background .15s;margin-bottom:12px}
+.scan-box:hover{background:#f5f5f0}
+.scan-icon{font-size:36px;margin-bottom:8px}
+
+/* Audit */
+.audit-row{padding:10px 0;border-bottom:0.5px solid #f0f0ea;display:flex;gap:10px}
+.audit-row:last-child{border-bottom:none}
+.audit-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.audit-desc{font-size:13px;font-weight:500}
+.audit-meta{font-size:11px;color:#999;margin-top:2px}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:#1a1a18;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1}
+
+/* Mobile nav */
+@media(max-width:480px){
+  .nav{overflow-x:auto;padding-bottom:4px}
+  .content{padding:12px}
+  .kpi-val{font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">📱 InvTech</div>
+    <h2>Inicia sesión</h2>
+    <div class="field"><label>Email</label><input type="email" id="login-email" value="admin@empresa.cl" autocomplete="username"></div>
+    <div class="field"><label>Contraseña</label><input type="password" id="login-pass" value="admin123" autocomplete="current-password"></div>
+    <div class="err" id="login-err">Email o contraseña incorrectos</div>
+    <button class="primary" style="width:100%;margin-top:14px" onclick="login()">Entrar</button>
+    <p style="font-size:11px;color:#aaa;margin-top:12px;text-align:center">Demo: admin@empresa.cl / admin123</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:flex">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span style="font-size:18px">📱</span>
+      <span class="logo">InvTech</span>
+      <span class="badge" id="badge-user"></span>
+    </div>
+    <button onclick="logout()" style="font-size:12px;color:#888;border:none;background:none">Cerrar sesión</button>
+  </div>
+
+  <div class="nav" id="nav">
+    <a class="active" onclick="showTab('dashboard',this)">📊 Dashboard</a>
+    <a onclick="showTab('equipos',this)">📱 Equipos</a>
+    <a onclick="showTab('asignar',this)">🔍 Escanear</a>
+    <a onclick="showTab('auditoria',this)">📋 Auditoría</a>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard">
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Total</div><div class="kpi-val" id="kpi-total">—</div></div>
+        <div class="kpi"><div class="kpi-label">Asignados</div><div class="kpi-val" id="kpi-asignados" style="color:#3b6d11">—</div></div>
+        <div class="kpi"><div class="kpi-label">Disponibles</div><div class="kpi-val" id="kpi-disponibles" style="color:#185fa5">—</div></div>
+        <div class="kpi"><div class="kpi-label">Mantención</div><div class="kpi-val" id="kpi-mantencion" style="color:#a32d2d">—</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Movimientos recientes</div>
+          <div id="mov-recientes"><p style="color:#aaa;font-size:13px">Cargando...</p></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Equipos por área</div>
+          <div id="bars-area"><p style="color:#aaa;font-size:13px">Cargando...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EQUIPOS -->
+    <div id="tab-equipos" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <input type="text" id="eq-buscar" placeholder="Buscar por modelo, serie o usuario..." style="flex:1;min-width:180px" oninput="cargarEquipos()">
+        <select id="eq-estado" onchange="cargarEquipos()">
+          <option value="">Todos los estados</option>
+          <option value="disponible">Disponible</option>
+          <option value="asignado">Asignado</option>
+          <option value="mantencion">Mantención</option>
+          <option value="baja">Baja</option>
+        </select>
+        <button onclick="showModal('modal-nuevo-equipo')">+ Nuevo equipo</button>
+      </div>
+      <div class="card" style="padding:0;overflow:auto">
+        <table>
+          <thead><tr><th>Serie</th><th>Modelo</th><th>Área</th><th>Asignado a</th><th>Estado</th><th>Últ. movimiento</th></tr></thead>
+          <tbody id="tbody-equipos"><tr><td colspan="6" style="color:#aaa;padding:20px;text-align:center">Cargando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ESCANEAR / ASIGNAR -->
+    <div id="tab-asignar" style="display:none">
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Escanear equipo</div>
+          <div class="scan-box" id="scan-area" onclick="document.getElementById('scan-input').focus()">
+            <div class="scan-icon">🔍</div>
+            <div style="font-size:13px">Conecta la pistola láser o escribe el número de serie</div>
+            <div style="font-size:11px;color:#bbb;margin-top:4px">El cursor ya está listo — escanea directamente</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <input type="text" id="scan-input" placeholder="Número de serie (ej: SN-0389)" style="flex:1;font-family:monospace" oninput="onScanInput(this.value)" autocomplete="off">
+            <button onclick="buscarSerie()">Buscar</button>
+          </div>
+          <div id="scan-result" style="display:none"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Registrar movimiento</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Serie del equipo</label>
+              <input type="text" id="f-serie" placeholder="SN-0000" style="width:100%;font-family:monospace"></div>
+            <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Tipo de movimiento</label>
+              <select id="f-tipo" style="width:100%">
+                <option value="asignacion">Asignación</option>
+                <option value="devolucion">Devolución</option>
+                <option value="mantencion">Mantención</option>
+                <option value="baja">Baja</option>
+              </select></div>
+            <div id="f-func-wrap"><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Funcionario</label>
+              <select id="f-func" style="width:100%"><option value="">Selecciona funcionario...</option></select></div>
+            <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Observación</label>
+              <input type="text" id="f-obs" placeholder="Condición, motivo..." style="width:100%"></div>
+            <button class="primary" onclick="registrarMovimiento()">✓ Registrar movimiento</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AUDITORÍA -->
+    <div id="tab-auditoria" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <input type="text" id="aud-serie" placeholder="Filtrar por serie de equipo..." style="flex:1;min-width:180px">
+        <button onclick="cargarAuditoria()">Buscar</button>
+        <button onclick="exportarCSV()">⬇ Exportar CSV</button>
+      </div>
+      <div class="card">
+        <div id="audit-log"><p style="color:#aaa;font-size:13px">Cargando...</p></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL nuevo equipo -->
+<div id="modal-nuevo-equipo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:24px;width:400px;max-width:90vw">
+    <h3 style="font-size:15px;margin-bottom:16px">Nuevo equipo</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="grid-column:1/-1"><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Número de serie *</label><input type="text" id="ne-serie" placeholder="SN-0000" style="width:100%;font-family:monospace"></div>
+      <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Modelo *</label><input type="text" id="ne-modelo" placeholder="iPhone 15 Pro" style="width:100%"></div>
+      <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Marca</label><input type="text" id="ne-marca" placeholder="Apple" style="width:100%"></div>
+      <div style="grid-column:1/-1"><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">IMEI</label><input type="text" id="ne-imei" placeholder="350000000000000" style="width:100%;font-family:monospace"></div>
+      <div style="grid-column:1/-1"><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Notas</label><input type="text" id="ne-notas" placeholder="Estado inicial, accesorios..." style="width:100%"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button onclick="hideModal('modal-nuevo-equipo')">Cancelar</button>
+      <button class="primary" onclick="crearEquipo()">Crear equipo</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+let token = localStorage.getItem('invtech_token');
+let userData = JSON.parse(localStorage.getItem('invtech_user') || 'null');
+
+function api(path, opts={}) {
+  return fetch(API + '/api' + path, {
+    ...opts,
+    headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token, ...(opts.headers||{}) }
+  }).then(r => r.json());
+}
+
+function toast(msg, dur=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function showModal(id) { document.getElementById(id).style.display='flex'; }
+function hideModal(id) { document.getElementById(id).style.display='none'; }
+
+// LOGIN
+async function login() {
+  const email = document.getElementById('login-email').value;
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-err');
+  err.style.display = 'none';
+  try {
+    const data = await fetch('/api/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, password: pass})
+    }).then(r => r.json());
+    if (data.error) { err.style.display='block'; return; }
+    token = data.token;
+    userData = data.usuario;
+    localStorage.setItem('invtech_token', token);
+    localStorage.setItem('invtech_user', JSON.stringify(userData));
+    initApp();
+  } catch { err.textContent = 'Error de conexión'; err.style.display='block'; }
+}
+
+function logout() {
+  localStorage.removeItem('invtech_token');
+  localStorage.removeItem('invtech_user');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function initApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('badge-user').textContent = userData.nombre + ' · ' + userData.rol;
+  cargarDashboard();
+  cargarFuncionarios();
+}
+
+// DASHBOARD
+async function cargarDashboard() {
+  const data = await api('/equipos/stats/resumen');
+  if (data.kpis) {
+    document.getElementById('kpi-total').textContent = data.kpis.total;
+    document.getElementById('kpi-asignados').textContent = data.kpis.asignados;
+    document.getElementById('kpi-disponibles').textContent = data.kpis.disponibles;
+    document.getElementById('kpi-mantencion').textContent = data.kpis.mantencion;
+  }
+  if (data.por_area) {
+    const max = Math.max(...data.por_area.map(a => Number(a.cantidad)), 1);
+    const colors = ['#378ADD','#1D9E75','#EF9F27','#7F77DD','#D4537E'];
+    document.getElementById('bars-area').innerHTML = data.por_area.map((a,i) => `
+      <div class="bar-wrap">
+        <div class="bar-label"><span>${a.area}</span><span>${a.cantidad}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(Number(a.cantidad)/max*100)}%;background:${colors[i%colors.length]}"></div></div>
+      </div>`).join('');
+  }
+  const movs = await api('/asignaciones?limit=6');
+  const tipoIcon = {asignacion:'🟢',devolucion:'🟡',mantencion:'🔴',baja:'⚫'};
+  document.getElementById('mov-recientes').innerHTML = movs.map ? movs.map(m => `
+    <div class="audit-row">
+      <div style="margin-top:3px">${tipoIcon[m.tipo]||'⚪'}</div>
+      <div>
+        <div class="audit-desc">${m.modelo} · ${m.numero_serie}</div>
+        <div class="audit-meta">${m.tipo} — ${m.funcionario || '—'} · ${m.registrado_por} · ${fmtFecha(m.fecha)}</div>
+      </div>
+    </div>`).join('') : '<p style="color:#aaa;font-size:13px">Sin movimientos aún</p>';
+}
+
+// EQUIPOS
+async function cargarEquipos() {
+  const q = document.getElementById('eq-buscar').value;
+  const estado = document.getElementById('eq-estado').value;
+  let url = '/equipos?';
+  if (q) url += 'q=' + encodeURIComponent(q) + '&';
+  if (estado) url += 'estado=' + estado;
+  const data = await api(url);
+  const tbody = document.getElementById('tbody-equipos');
+  if (!data.length) { tbody.innerHTML='<tr><td colspan="6" style="color:#aaa;padding:20px;text-align:center">Sin resultados</td></tr>'; return; }
+  tbody.innerHTML = data.map(e => `
+    <tr>
+      <td style="font-family:monospace;font-size:12px">${e.numero_serie}</td>
+      <td style="font-weight:500">${e.modelo}</td>
+      <td>${e.area || '—'}</td>
+      <td>${e.asignado_a || '—'}</td>
+      <td><span class="pill ${e.estado}">${e.estado}</span></td>
+      <td style="font-size:12px;color:#aaa">${e.ultimo_movimiento ? fmtFecha(e.ultimo_movimiento) : '—'}</td>
+    </tr>`).join('');
+}
+
+async function crearEquipo() {
+  const body = {
+    numero_serie: document.getElementById('ne-serie').value,
+    modelo: document.getElementById('ne-modelo').value,
+    marca: document.getElementById('ne-marca').value,
+    imei: document.getElementById('ne-imei').value,
+    notas: document.getElementById('ne-notas').value
+  };
+  if (!body.numero_serie || !body.modelo) { toast('Serie y modelo son requeridos'); return; }
+  const res = await api('/equipos', {method:'POST', body: JSON.stringify(body)});
+  if (res.error) { toast('Error: ' + res.error); return; }
+  hideModal('modal-nuevo-equipo');
+  toast('Equipo creado correctamente');
+  cargarEquipos();
+}
+
+// ESCANEAR
+let scanTimer;
+function onScanInput(val) {
+  clearTimeout(scanTimer);
+  if (val.length >= 5) scanTimer = setTimeout(buscarSerie, 400);
+}
+
+async function buscarSerie() {
+  const serie = document.getElementById('scan-input').value.trim().toUpperCase();
+  if (!serie) return;
+  const data = await api('/equipos/serie/' + encodeURIComponent(serie));
+  const box = document.getElementById('scan-result');
+  if (data.error) {
+    box.innerHTML = `<div style="color:#a32d2d;font-size:13px;padding:10px;background:#fcebeb;border-radius:8px">❌ ${data.error}</div>`;
+  } else {
+    box.innerHTML = `
+      <div style="padding:12px;background:#eaf3de;border-radius:8px;border:0.5px solid #97c459">
+        <div style="font-size:12px;color:#3b6d11;margin-bottom:6px">✓ Equipo encontrado</div>
+        <div style="font-weight:500">${data.modelo}</div>
+        <div style="font-size:12px;color:#666;margin-top:2px">Serie: ${data.numero_serie} · Estado: <span class="pill ${data.estado}">${data.estado}</span></div>
+        <div style="font-size:12px;color:#666;margin-top:2px">Área: ${data.area||'—'} · Asignado a: ${data.asignado_a||'—'}</div>
+      </div>`;
+    document.getElementById('f-serie').value = data.numero_serie;
+  }
+  box.style.display = 'block';
+}
+
+async function cargarFuncionarios() {
+  const data = await api('/funcionarios');
+  const sel = document.getElementById('f-func');
+  if (data && data.map) {
+    sel.innerHTML = '<option value="">Selecciona funcionario...</option>' +
+      data.map(f => `<option value="${f.id}">${f.nombre} · ${f.area||'Sin área'}</option>`).join('');
+  }
+  document.getElementById('f-tipo').addEventListener('change', function() {
+    document.getElementById('f-func-wrap').style.display =
+      (this.value === 'devolucion' || this.value === 'baja') ? 'none' : 'block';
+  });
+}
+
+async function registrarMovimiento() {
+  const serie = document.getElementById('f-serie').value.trim().toUpperCase();
+  const tipo = document.getElementById('f-tipo').value;
+  const funcId = document.getElementById('f-func').value;
+  const obs = document.getElementById('f-obs').value;
+  if (!serie) { toast('Ingresa o escanea un número de serie'); return; }
+
+  const eq = await api('/equipos/serie/' + encodeURIComponent(serie));
+  if (eq.error) { toast('Serie no encontrada: ' + serie); return; }
+
+  const body = { equipo_id: eq.id, tipo, observacion: obs };
+  if (funcId) body.funcionario_id = parseInt(funcId);
+
+  const res = await api('/asignaciones', {method:'POST', body: JSON.stringify(body)});
+  if (res.error) { toast('Error: ' + res.error); return; }
+  toast('✓ ' + res.mensaje);
+  document.getElementById('f-serie').value = '';
+  document.getElementById('scan-input').value = '';
+  document.getElementById('scan-result').style.display = 'none';
+  document.getElementById('f-obs').value = '';
+  cargarDashboard();
+}
+
+// AUDITORÍA
+async function cargarAuditoria() {
+  const serie = document.getElementById('aud-serie').value.trim().toUpperCase();
+  let url = '/asignaciones?limit=100';
+  if (serie) {
+    const eq = await api('/equipos/serie/' + encodeURIComponent(serie));
+    if (eq.id) url += '&equipo_id=' + eq.id;
+  }
+  const data = await api(url);
+  const tipoColor = {asignacion:'#3b6d11',devolucion:'#854f0b',mantencion:'#a32d2d',baja:'#5f5e5a'};
+  const tipoBg = {asignacion:'#eaf3de',devolucion:'#faeeda',mantencion:'#fcebeb',baja:'#f1efe8'};
+  document.getElementById('audit-log').innerHTML = data.map ? data.map(a => `
+    <div class="audit-row">
+      <div class="audit-dot" style="background:${tipoColor[a.tipo]||'#888'}"></div>
+      <div style="flex:1">
+        <div class="audit-desc">${a.tipo.toUpperCase()} — ${a.modelo} · <span style="font-family:monospace;font-size:12px">${a.numero_serie}</span></div>
+        <div class="audit-meta">${a.funcionario ? 'Funcionario: ' + a.funcionario + ' · ' : ''}Registrado por ${a.registrado_por} · ${fmtFecha(a.fecha)}</div>
+        ${a.observacion ? `<div style="font-size:12px;color:#888;margin-top:2px">${a.observacion}</div>` : ''}
+      </div>
+      <span class="pill" style="background:${tipoBg[a.tipo]};color:${tipoColor[a.tipo]}">${a.tipo}</span>
+    </div>`).join('') : '<p style="color:#aaa">Sin registros</p>';
+}
+
+function exportarCSV() {
+  api('/asignaciones?limit=1000').then(data => {
+    if (!data.map) return;
+    const header = 'fecha,tipo,numero_serie,modelo,funcionario,registrado_por,observacion';
+    const rows = data.map(a =>
+      [fmtFecha(a.fecha),a.tipo,a.numero_serie,a.modelo,a.funcionario||'',a.registrado_por,a.observacion||''].join(',')
+    );
+    const csv = [header,...rows].join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='auditoria_invtech.csv'; a.click();
+  });
+}
+
+function fmtFecha(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const hoy = new Date();
+  if (d.toDateString() === hoy.toDateString()) return 'Hoy ' + d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+}
+
+function showTab(name, el) {
+  ['dashboard','equipos','asignar','auditoria'].forEach(t => document.getElementById('tab-'+t).style.display='none');
+  document.getElementById('tab-'+name).style.display = 'block';
+  document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (name === 'equipos') cargarEquipos();
+  if (name === 'auditoria') cargarAuditoria();
+}
+
+// Auto-login si hay token guardado
+if (token && userData) initApp();
+</script>
+</body>
+</html>
