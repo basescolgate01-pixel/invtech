@@ -275,14 +275,53 @@ tr:hover td{background:var(--bg3)}
 
       <!-- AUDITORÍA -->
       <div id="tab-auditoria" style="display:none">
-        <div class="tw">
-          <div class="th">
-            <input type="text" id="as" placeholder="Filtrar por serie..." class="mono" style="width:200px">
-            <button onclick="cargarAudit()">Buscar</button>
-            <button onclick="exportCSV()">↓ CSV</button>
-          </div>
-          <div id="alist"><p style="color:var(--text3);padding:20px">Cargando...</p></div>
+        
+        <!-- ESTADÍSTICAS -->
+        <div class="kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+          <div class="kpi t"><div class="kpi-lbl">Total movimientos</div><div class="kpi-n" id="stat-total">—</div></div>
+          <div class="kpi a"><div class="kpi-lbl">Más activo</div><div class="kpi-n g" id="stat-user" style="font-size:14px">—</div></div>
+          <div class="kpi d"><div class="kpi-lbl">Este mes</div><div class="kpi-n b" id="stat-mes">—</div></div>
         </div>
+
+        <!-- FILTROS AVANZADOS -->
+        <div class="tw" style="margin-bottom:16px">
+          <div class="th" style="flex-wrap:wrap;gap:8px">
+            <input type="text" id="f-serie" placeholder="Buscar por serie..." class="mono" style="width:180px">
+            <select id="f-tipo" style="width:140px">
+              <option value="">Todos los tipos</option>
+              <option value="asignacion">Asignación</option>
+              <option value="devolucion">Devolución</option>
+              <option value="mantencion">Mantención</option>
+              <option value="baja">Baja</option>
+            </select>
+            <input type="date" id="f-desde" style="width:140px" placeholder="Desde">
+            <input type="date" id="f-hasta" style="width:140px" placeholder="Hasta">
+            <button class="primary" onclick="cargarAudit()">🔍 Buscar</button>
+            <button onclick="limpiarFiltros()">Limpiar</button>
+            <div style="margin-left:auto;display:flex;gap:6px">
+              <button onclick="exportExcel()">📊 Excel</button>
+              <button onclick="exportCSV()">📄 CSV</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- LISTA DE MOVIMIENTOS -->
+        <div class="tw">
+          <div class="th" style="justify-content:space-between">
+            <span style="font-size:12px;color:var(--text2)"><span id="count-movs">0</span> movimientos encontrados</span>
+            <button onclick="toggleTimeline()" id="btn-timeline" style="font-size:11px">📅 Ver timeline</button>
+          </div>
+          <div id="alist"><p style="color:var(--text3);padding:20px">Usa los filtros para buscar movimientos</p></div>
+        </div>
+
+        <!-- MODAL TIMELINE -->
+        <div class="mo" id="modal-timeline">
+          <div class="md" style="width:600px;max-width:92vw">
+            <div class="md-title">Timeline del equipo <button onclick="closeM('modal-timeline')">✕</button></div>
+            <div id="timeline-content" style="max-height:500px;overflow-y:auto"></div>
+          </div>
+        </div>
+
       </div>
 
       <!-- ADMIN -->
@@ -447,14 +486,160 @@ async function registrar(){
   if(r.error){toast(r.error,'err');return}toast('✓ '+r.mensaje);
   document.getElementById('fs').value='';document.getElementById('si').value='';document.getElementById('fo').value='';document.getElementById('sr').style.display='none';document.getElementById('sz').classList.remove('on');cargarDash()}
 
-async function cargarAudit(){
-  const s=document.getElementById('as').value.trim().toUpperCase();let url='/asignaciones?limit=100';
-  if(s){const eq=await API('/equipos/serie/'+encodeURIComponent(s));if(eq.id)url+='&equipo_id='+eq.id}
-  const d=await API(url);const dc={asignacion:'var(--green)',devolucion:'var(--amber)',mantencion:'var(--red)',baja:'var(--text3)'};
-  document.getElementById('alist').innerHTML=d.map?d.map(a=>`<div class="arow"><div class="adot" style="background:${dc[a.tipo]||'var(--text3)'}"></div><div class="abody"><div class="atitle">${a.tipo.toUpperCase()} — ${a.modelo} <span class="mono" style="font-size:11px;color:var(--text3)">${a.numero_serie}</span></div><div class="ameta">${a.funcionario?'Funcionario: '+a.funcionario+' · ':''}Por <strong style="color:var(--text2)">${a.registrado_por}</strong> · ${ff(a.fecha)}</div>${a.observacion?`<div class="aobs">"${a.observacion}"</div>`:''}</div><span class="pill ${a.tipo==='asignacion'?'asignado':a.tipo==='devolucion'?'disponible':a.tipo==='mantencion'?'mantencion':'baja'}">${a.tipo}</span></div>`).join(''):'<p style="color:var(--text3);padding:20px">Sin registros</p>'}
+let currentMovs = [];
+let timelineEquipo = null;
 
-function exportCSV(){API('/asignaciones?limit=1000').then(d=>{if(!d.map)return;const h='fecha,tipo,numero_serie,modelo,funcionario,registrado_por,observacion';const r=d.map(a=>[ff(a.fecha),a.tipo,a.numero_serie,a.modelo,a.funcionario||'',a.registrado_por,a.observacion||''].join(','));const b=new Blob([[h,...r].join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='auditoria.csv';a.click();toast('✓ CSV exportado')})}
+async function cargarStats() {
+  const d = await API('/asignaciones/stats');
+  if (!d.por_tipo) return;
+  
+  const total = d.por_tipo.reduce((sum, t) => sum + Number(t.cantidad), 0);
+  document.getElementById('stat-total').textContent = total;
+  
+  if (d.por_usuario.length) {
+    const top = d.por_usuario[0];
+    document.getElementById('stat-user').textContent = top.nombre.split(' ')[0];
+  }
+  
+  if (d.por_mes.length) {
+    document.getElementById('stat-mes').textContent = d.por_mes[0].cantidad;
+  }
+}
 
+async function cargarAudit() {
+  const serie = document.getElementById('f-serie').value.trim().toUpperCase();
+  const tipo = document.getElementById('f-tipo').value;
+  const desde = document.getElementById('f-desde').value;
+  const hasta = document.getElementById('f-hasta').value;
+  
+  let url = '/asignaciones?limit=500';
+  
+  if (serie) {
+    const eq = await API('/equipos/serie/' + encodeURIComponent(serie));
+    if (eq.id) {
+      url += '&equipo_id=' + eq.id;
+      timelineEquipo = eq;
+      document.getElementById('btn-timeline').style.display = 'block';
+    } else {
+      toast('Serie no encontrada', 'err');
+      return;
+    }
+  } else {
+    timelineEquipo = null;
+    document.getElementById('btn-timeline').style.display = 'none';
+  }
+  
+  if (tipo) url += '&tipo=' + tipo;
+  if (desde) url += '&fecha_desde=' + desde + 'T00:00:00';
+  if (hasta) url += '&fecha_hasta=' + hasta + 'T23:59:59';
+  
+  const d = await API(url);
+  currentMovs = d.map ? d : [];
+  
+  document.getElementById('count-movs').textContent = currentMovs.length;
+  
+  const dc = { asignacion: 'var(--green)', devolucion: 'var(--amber)', mantencion: 'var(--red)', baja: 'var(--text3)' };
+  document.getElementById('alist').innerHTML = currentMovs.length ? currentMovs.map(a => `
+    <div class="arow">
+      <div class="adot" style="background:${dc[a.tipo] || 'var(--text3)'}"></div>
+      <div class="abody">
+        <div class="atitle">${a.tipo.toUpperCase()} — ${a.modelo} <span class="mono" style="font-size:11px;color:var(--text3)">${a.numero_serie}</span></div>
+        <div class="ameta">
+          ${a.funcionario ? 'Funcionario: ' + a.funcionario + (a.rut ? ' (' + a.rut + ')' : '') + ' · ' : ''}
+          Área: ${a.area || 'Sin área'} · 
+          Por <strong style="color:var(--text2)">${a.registrado_por}</strong> · 
+          ${ff(a.fecha)}
+        </div>
+        ${a.observacion ? `<div class="aobs">"${a.observacion}"</div>` : ''}
+      </div>
+      <span class="pill ${a.tipo === 'asignacion' ? 'asignado' : a.tipo === 'devolucion' ? 'disponible' : a.tipo === 'mantencion' ? 'mantencion' : 'baja'}">${a.tipo}</span>
+    </div>`).join('') : '<p style="color:var(--text3);padding:20px">Sin movimientos con estos filtros</p>';
+}
+
+function limpiarFiltros() {
+  document.getElementById('f-serie').value = '';
+  document.getElementById('f-tipo').value = '';
+  document.getElementById('f-desde').value = '';
+  document.getElementById('f-hasta').value = '';
+  timelineEquipo = null;
+  document.getElementById('btn-timeline').style.display = 'none';
+  cargarAudit();
+}
+
+function toggleTimeline() {
+  if (!timelineEquipo) return;
+  renderTimeline();
+  openM('modal-timeline');
+}
+
+function renderTimeline() {
+  if (!currentMovs.length) return;
+  
+  const dc = { asignacion: 'var(--green)', devolucion: 'var(--amber)', mantencion: 'var(--red)', baja: 'var(--text3)' };
+  const sorted = [...currentMovs].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+  
+  document.getElementById('timeline-content').innerHTML = `
+    <div style="padding:16px 0">
+      <div style="font-size:13px;font-weight:600;margin-bottom:16px;color:var(--text)">
+        ${timelineEquipo.modelo} · <span class="mono" style="font-size:12px;color:var(--text2)">${timelineEquipo.numero_serie}</span>
+      </div>
+      <div style="position:relative;padding-left:24px">
+        <div style="position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--border)"></div>
+        ${sorted.map((m, i) => `
+          <div style="position:relative;margin-bottom:${i === sorted.length - 1 ? '0' : '20px'}">
+            <div style="position:absolute;left:-24px;width:16px;height:16px;border-radius:50%;background:${dc[m.tipo]};border:3px solid var(--bg2)"></div>
+            <div style="background:var(--bg3);border-radius:var(--r);padding:12px">
+              <div style="display:flex;align-items:center;justify-content:between;margin-bottom:6px">
+                <span style="font-size:12px;font-weight:600;color:var(--text);text-transform:uppercase">${m.tipo}</span>
+                <span style="font-size:11px;color:var(--text3);margin-left:auto">${ff(m.fecha)}</span>
+              </div>
+              ${m.funcionario ? `<div style="font-size:12px;color:var(--text2);margin-bottom:3px">→ ${m.funcionario}${m.rut ? ' (' + m.rut + ')' : ''}</div>` : ''}
+              <div style="font-size:11px;color:var(--text3)">Registrado por ${m.registrado_por}</div>
+              ${m.observacion ? `<div style="font-size:12px;color:var(--text2);margin-top:6px;font-style:italic;border-left:2px solid ${dc[m.tipo]};padding-left:8px">"${m.observacion}"</div>` : ''}
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+async function exportExcel() {
+  const tipo = document.getElementById('f-tipo').value;
+  const desde = document.getElementById('f-desde').value;
+  const hasta = document.getElementById('f-hasta').value;
+  
+  let url = '/asignaciones/export/excel?';
+  if (tipo) url += 'tipo=' + tipo + '&';
+  if (desde) url += 'fecha_desde=' + desde + 'T00:00:00&';
+  if (hasta) url += 'fecha_hasta=' + hasta + 'T23:59:59&';
+  
+  try {
+    const r = await fetch('/api' + url, { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!r.ok) { toast('Error al exportar', 'err'); return; }
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'auditoria_invtech_' + new Date().toISOString().split('T')[0] + '.xlsx';
+    a.click();
+    toast('✓ Excel exportado');
+  } catch (e) {
+    toast('Error al exportar', 'err');
+  }
+}
+
+function exportCSV() {
+  if (!currentMovs.length) { toast('Sin datos para exportar', 'err'); return; }
+  const h = 'fecha,tipo,numero_serie,modelo,marca,area,funcionario,registrado_por,observacion';
+  const r = currentMovs.map(a => [
+    ff(a.fecha), a.tipo, a.numero_serie, a.modelo, a.marca || '', a.area || '', 
+    a.funcionario || '', a.registrado_por, a.observacion || ''
+  ].join(','));
+  const b = new Blob([[h, ...r].join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'auditoria_' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+  toast('✓ CSV exportado');
+}
 async function cargarUsuarios(){
   const d=await API('/usuarios');if(d.error){document.getElementById('ulist').innerHTML=`<p style="color:var(--red);padding:20px">${d.error}</p>`;return}
   const ac=['#6c63ff','#2dd4a0','#4da6ff','#f5a623','#ff5c6c'];
@@ -498,7 +683,9 @@ function showTab(name,el){
   document.getElementById('tab-'+name).style.display='block';
   document.querySelectorAll('.nav-item').forEach(a=>a.classList.remove('active'));if(el)el.classList.add('active');
   const[tt,st]=ptitles[name]||['',''];document.getElementById('ptitle').textContent=tt;document.getElementById('psub').textContent=st;
-  if(name==='equipos')cargarEquipos();if(name==='auditoria')cargarAudit();if(name==='admin')cargarUsuarios()}
+  if(name==='equipos')cargarEquipos();
+  if(name==='auditoria'){cargarStats();cargarAudit();}
+  if(name==='admin')cargarUsuarios()}
 
 function ff(iso){if(!iso)return'—';const d=new Date(iso),h=new Date();
   if(d.toDateString()===h.toDateString())return'Hoy '+d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
