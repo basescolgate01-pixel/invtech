@@ -200,6 +200,7 @@ tr:hover td{background:var(--bg3)}
       <div class="nav-sec">Registros</div>
       <div class="nav-item" onclick="showTab('auditoria',this)"><span class="nav-icon">≡</span>Auditoría</div>
       <div class="nav-item" id="nav-admin" style="display:none" onclick="showTab('admin',this)"><span class="nav-icon">⚙</span>Administración</div>
+      <div class="nav-item" onclick="window.open('/etiquetas','_blank')"><span class="nav-icon">⬡</span>Etiquetas</div>
     </nav>
     <div class="sb-foot"><button onclick="logout()">Cerrar sesión</button></div>
   </div>
@@ -235,7 +236,7 @@ tr:hover td{background:var(--bg3)}
             </select>
             <button class="primary" onclick="openM('meq')">+ Nuevo equipo</button>
           </div>
-          <table><thead><tr><th>Serie</th><th>Modelo</th><th>Área</th><th>Asignado a</th><th>Estado</th><th>Último mov.</th></tr></thead>
+          <table><thead><tr><th>Serie</th><th>Modelo</th><th>Área</th><th>Asignado a</th><th>Estado</th><th>Último mov.</th><th></th></tr></thead>
           <tbody id="teq"><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:28px">Cargando...</td></tr></tbody></table>
         </div>
       </div>
@@ -416,7 +417,7 @@ async function cargarEquipos(){
   let url='/equipos?';if(q)url+='q='+encodeURIComponent(q)+'&';if(e)url+='estado='+e;
   const d=await API(url);const t=document.getElementById('teq');
   if(!d.length){t.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:28px">Sin resultados</td></tr>';return}
-  t.innerHTML=d.map(e=>`<tr><td class="mono">${e.numero_serie}</td><td class="tdm">${e.modelo}</td><td>${e.area||'—'}</td><td>${e.asignado_a||'—'}</td><td><span class="pill ${e.estado}">${e.estado}</span></td><td style="color:var(--text3)">${e.ultimo_movimiento?ff(e.ultimo_movimiento):'—'}</td></tr>`).join('')}
+  t.innerHTML=d.map(e=>`<tr><td class="mono">${e.numero_serie}</td><td class="tdm">${e.modelo}</td><td>${e.area||'—'}</td><td>${e.asignado_a||'—'}</td><td><span class="pill ${e.estado}">${e.estado}</span></td><td style="color:var(--text3)">${e.ultimo_movimiento?ff(e.ultimo_movimiento):'—'}</td><td><button onclick="window.open('/etiquetas?serie=${e.numero_serie}','_blank')" style="padding:4px 8px;font-size:11px;border-radius:6px" title="Imprimir etiqueta">🏷</button></td></tr>`).join('')}
 
 async function crearEquipo(){
   const b={numero_serie:document.getElementById('nes').value,modelo:document.getElementById('nem').value,marca:document.getElementById('nemk').value,imei:document.getElementById('nei').value,notas:document.getElementById('nen').value};

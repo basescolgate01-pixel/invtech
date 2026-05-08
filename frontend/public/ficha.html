@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvTech · Ficha de Equipo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0f11;--bg2:#16161a;--bg3:#1e1e24;--border:#2a2a32;--text:#e8e8f0;--text2:#9898aa;--text3:#5a5a6a;--accent:#6c63ff;--green:#2dd4a0;--amber:#f5a623;--red:#ff5c6c;--blue:#4da6ff;--r:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.card-top{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:8px}
+.brand-icon{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.brand-name{font-size:14px;font-weight:600}
+.serie-badge{margin-left:auto;font-family:'DM Mono',monospace;font-size:12px;color:var(--text2);background:var(--bg3);padding:4px 10px;border-radius:99px;border:1px solid var(--border)}
+.estado-bar{padding:12px 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.estado-dot{width:8px;height:8px;border-radius:50%}
+.estado-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.card-body{padding:20px}
+.equipo-nombre{font-size:20px;font-weight:600;letter-spacing:-.4px;margin-bottom:3px}
+.equipo-marca{font-size:13px;color:var(--text2);margin-bottom:18px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.info-item{background:var(--bg3);border-radius:var(--r);padding:12px}
+.info-lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.info-val{font-size:13px;font-weight:500;color:var(--text)}
+.info-val.mono{font-family:'DM Mono',monospace;font-size:12px}
+.asignacion-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:16px}
+.asig-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.asig-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)}
+.asig-row:last-child{border-bottom:none}
+.asig-key{font-size:12px;color:var(--text2);flex:1}
+.asig-val{font-size:12px;font-weight:500;color:var(--text)}
+.obs-box{background:var(--bg3);border-radius:var(--r);padding:10px 14px;margin-bottom:16px;font-size:13px;color:var(--text2);font-style:italic;border-left:2px solid var(--accent)}
+.card-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.footer-text{font-size:11px;color:var(--text3)}
+.footer-time{font-size:11px;color:var(--text3)}
+.loading{text-align:center;padding:40px 20px;color:var(--text2)}
+.error{text-align:center;padding:40px 20px;color:var(--red)}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="loading">Cargando ficha del equipo...</div>
+</div>
+<script>
+const serie = window.location.pathname.split('/ficha/')[1]?.split('?')[0];
+if (!serie) { document.getElementById('card').innerHTML = '<div class="error">Serie no especificada</div>'; }
+else {
+  fetch('/api/equipos/ficha/' + encodeURIComponent(serie))
+    .then(r => r.json())
+    .then(d => {
+      if (d.error) { document.getElementById('card').innerHTML = `<div class="error">Equipo no encontrado: ${serie}</div>`; return; }
+      const estados = { asignado: ['var(--green)','Asignado'], disponible: ['var(--blue)','Disponible'], mantencion: ['var(--red)','En mantención'], baja: ['var(--text3)','Dado de baja'] };
+      const [color, label] = estados[d.estado] || ['var(--text3)', d.estado];
+      const fmt = iso => iso ? new Date(iso).toLocaleDateString('es-CL', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+      document.getElementById('card').innerHTML = `
+        <div class="card-top">
+          <div class="brand"><div class="brand-icon">📱</div><span class="brand-name">InvTech</span></div>
+          <span class="serie-badge">${d.numero_serie}</span>
+        </div>
+        <div class="estado-bar">
+          <div class="estado-dot" style="background:${color}"></div>
+          <span class="estado-label" style="color:${color}">${label}</span>
+          ${d.estado === 'asignado' && d.asignado_a ? `<span style="font-size:12px;color:var(--text2);margin-left:4px">→ ${d.asignado_a}</span>` : ''}
+        </div>
+        <div class="card-body">
+          <div class="equipo-nombre">${d.modelo}</div>
+          <div class="equipo-marca">${d.marca || 'Sin marca especificada'}</div>
+          <div class="info-grid">
+            <div class="info-item"><div class="info-lbl">Serie</div><div class="info-val mono">${d.numero_serie}</div></div>
+            <div class="info-item"><div class="info-lbl">IMEI</div><div class="info-val mono">${d.imei || '—'}</div></div>
+            <div class="info-item"><div class="info-lbl">Área</div><div class="info-val">${d.area || '—'}</div></div>
+            <div class="info-item"><div class="info-lbl">Estado</div><div class="info-val" style="color:${color}">${label}</div></div>
+          </div>
+          ${d.estado === 'asignado' && d.asignado_a ? `
+          <div class="asignacion-box">
+            <div class="asig-title">Asignación actual</div>
+            <div class="asig-row"><span class="asig-key">Funcionario</span><span class="asig-val">${d.asignado_a}</span></div>
+            ${d.rut ? `<div class="asig-row"><span class="asig-key">RUT</span><span class="asig-val">${d.rut}</span></div>` : ''}
+            <div class="asig-row"><span class="asig-key">Área</span><span class="asig-val">${d.area || '—'}</span></div>
+            <div class="asig-row"><span class="asig-key">Fecha asignación</span><span class="asig-val">${fmt(d.fecha_asignacion)}</span></div>
+            <div class="asig-row"><span class="asig-key">Registrado por</span><span class="asig-val">${d.registrado_por || '—'}</span></div>
+          </div>
+          ${d.observacion ? `<div class="obs-box">"${d.observacion}"</div>` : ''}` : ''}
+          ${d.notas ? `<div class="obs-box">${d.notas}</div>` : ''}
+        </div>
+        <div class="card-footer">
+          <span class="footer-text">invtech-production.up.railway.app</span>
+          <span class="footer-time">Consultado: ${fmt(new Date().toISOString())}</span>
+        </div>`;
+    }).catch(() => { document.getElementById('card').innerHTML = '<div class="error">Error al cargar la ficha</div>'; });
+}
+</script>
+</body>
+</html>

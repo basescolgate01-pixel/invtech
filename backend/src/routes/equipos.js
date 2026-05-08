@@ -29,6 +29,32 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// GET /api/equipos/ficha/:serie — ficha pública para QR (sin auth)
+router.get('/ficha/:serie', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT e.numero_serie, e.modelo, e.marca, e.imei, e.estado, e.notas,
+              a.nombre AS area,
+              f.nombre AS asignado_a, f.rut,
+              asig.fecha AS fecha_asignacion,
+              asig.observacion,
+              u.nombre AS registrado_por
+       FROM equipos e
+       LEFT JOIN areas a ON a.id = e.area_id
+       LEFT JOIN asignaciones asig ON asig.equipo_id = e.id
+         AND asig.id = (SELECT id FROM asignaciones WHERE equipo_id = e.id ORDER BY fecha DESC LIMIT 1)
+       LEFT JOIN funcionarios f ON f.id = asig.funcionario_id
+       LEFT JOIN usuarios u ON u.id = asig.usuario_id
+       WHERE e.numero_serie = $1`,
+      [req.params.serie.toUpperCase()]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Equipo no encontrado' });
+    res.json(rows[0]);
+  } catch (e) {
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
 // GET /api/equipos/:serie — buscar por número de serie (para pistola)
 router.get('/serie/:serie', auth, async (req, res) => {
   try {

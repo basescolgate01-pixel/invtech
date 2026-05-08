@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvTech · Imprimir Etiquetas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<style>
+:root{--bg:#0f0f11;--bg2:#16161a;--bg3:#1e1e24;--border:#2a2a32;--border2:#36363f;--text:#e8e8f0;--text2:#9898aa;--text3:#5a5a6a;--accent:#6c63ff;--green:#2dd4a0;--amber:#f5a623;--red:#ff5c6c;--blue:#4da6ff;--r:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+input,select{font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--r);background:var(--bg3);color:var(--text);outline:none}
+input:focus,select:focus{border-color:var(--accent)}
+button{font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 16px;border:1px solid var(--border2);border-radius:var(--r);background:var(--bg3);color:var(--text2);cursor:pointer;font-weight:500}
+button:hover{background:var(--bg2);color:var(--text)}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.primary:hover{background:#5a52dd}
+
+.layout{display:grid;grid-template-columns:300px 1fr;min-height:100vh}
+.panel{background:var(--bg2);border-right:1px solid var(--border);padding:0;display:flex;flex-direction:column}
+.panel-top{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.brand-icon{width:26px;height:26px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.panel-title{font-size:14px;font-weight:600}
+.panel-body{padding:16px;flex:1;overflow-y:auto}
+.section{margin-bottom:20px}
+.section-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px;font-weight:500}
+.field input,.field select{width:100%}
+.toggle-group{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.toggle-btn{padding:7px 10px;text-align:center;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);transition:all .15s}
+.toggle-btn.active{background:rgba(108,99,255,.15);color:var(--accent);border-color:rgba(108,99,255,.3)}
+.radio-group{display:flex;flex-direction:column;gap:6px}
+.radio-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);font-size:12px;color:var(--text2);transition:all .15s}
+.radio-item.active{background:rgba(108,99,255,.1);color:var(--text);border-color:rgba(108,99,255,.25)}
+.radio-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.radio-item.active .radio-dot{border-color:var(--accent);background:var(--accent)}
+.radio-item.active .radio-dot::after{content:'';width:5px;height:5px;border-radius:50%;background:#fff}
+.range-wrap{display:flex;align-items:center;gap:8px}
+.range-wrap input[type=range]{flex:1;accent-color:var(--accent)}
+.range-val{font-size:12px;color:var(--text2);min-width:36px;text-align:right;font-family:'DM Mono',monospace}
+.equipo-list{max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r)}
+.eq-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px}
+.eq-item:last-child{border-bottom:none}
+.eq-item:hover{background:var(--bg3)}
+.eq-item input[type=checkbox]{accent-color:var(--accent);flex-shrink:0}
+.eq-serie{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);margin-left:auto}
+.panel-footer{padding:14px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+
+/* PREVIEW */
+.preview-area{background:var(--bg);flex:1;padding:24px;overflow-y:auto}
+.preview-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.preview-title{font-size:14px;font-weight:600;color:var(--text2)}
+.labels-container{display:flex;flex-wrap:wrap;gap:16px;justify-content:flex-start}
+
+/* ETIQUETA BASE */
+.etiqueta{background:#fff;color:#000;border-radius:6px;overflow:hidden;font-family:'DM Sans',sans-serif;box-shadow:0 2px 12px rgba(0,0,0,.3);page-break-inside:avoid}
+.etq-header{background:#1a1a1a;padding:6px 10px;display:flex;align-items:center;justify-content:space-between}
+.etq-header-title{color:#fff;font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.etq-header-logo{color:rgba(255,255,255,.6);font-size:8px}
+.etq-body{padding:10px}
+.etq-model{font-size:13px;font-weight:700;color:#111;line-height:1.2;margin-bottom:1px}
+.etq-brand{font-size:10px;color:#666;margin-bottom:8px}
+.etq-barcode{width:100%;margin-bottom:6px}
+.etq-barcode svg,.etq-barcode canvas{width:100%!important;height:auto!important}
+.etq-serie{font-family:'DM Mono',monospace;font-size:9px;color:#444;text-align:center;margin-bottom:8px}
+.etq-divider{border:none;border-top:0.5px solid #eee;margin:6px 0}
+.etq-qr-section{display:flex;align-items:center;gap:8px}
+.etq-qr-box{flex-shrink:0}
+.etq-qr-info{flex:1;min-width:0}
+.etq-qr-label{font-size:8px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.etq-qr-text{font-size:9px;color:#333;line-height:1.4;word-break:break-all}
+.etq-footer{background:#f8f8f8;padding:4px 10px;display:flex;justify-content:space-between;border-top:0.5px solid #eee}
+.etq-footer span{font-size:8px;color:#999}
+.etq-meta-pills{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+.etq-pill{font-size:8px;padding:1px 5px;border-radius:99px;background:#f0f0f0;color:#444;border:0.5px solid #ddd}
+
+/* FORMATO PEQUEÑO */
+.etiqueta.sm .etq-body{padding:7px}
+.etiqueta.sm .etq-model{font-size:11px}
+.etiqueta.sm .etq-brand{font-size:9px;margin-bottom:6px}
+.etiqueta.sm .etq-qr-text{font-size:8px}
+
+/* PRINT */
+@media print {
+  body{background:#fff!important;color:#000!important}
+  .panel,.preview-topbar{display:none!important}
+  .preview-area{padding:10px!important;background:#fff!important}
+  .labels-container{gap:8px}
+  .etiqueta{box-shadow:none!important;border:0.5px solid #ddd}
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- PANEL IZQUIERDO: CONFIGURACIÓN -->
+  <div class="panel">
+    <div class="panel-top">
+      <div class="brand-icon">📱</div>
+      <span class="panel-title">Configurar etiquetas</span>
+    </div>
+    <div class="panel-body">
+
+      <div class="section">
+        <div class="section-title">Formato de impresión</div>
+        <div class="radio-group">
+          <div class="radio-item active" id="fmt-a4" onclick="setFormato('a4')">
+            <div class="radio-dot"></div>
+            <div><div style="font-weight:500;color:var(--text)">Hoja A4 / Carta</div><div style="font-size:11px;color:var(--text3);margin-top:1px">Impresora normal · 4 etiquetas por hoja</div></div>
+          </div>
+          <div class="radio-item" id="fmt-zebra" onclick="setFormato('zebra')">
+            <div class="radio-dot"></div>
+            <div><div style="font-weight:500;color:var(--text)">Etiquetadora (Zebra/Brother)</div><div style="font-size:11px;color:var(--text3);margin-top:1px">Etiqueta individual · tamaño pequeño</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Contenido de la etiqueta</div>
+        <div class="toggle-group">
+          <div class="toggle-btn active" id="tog-barcode" onclick="toggleOpt('barcode')">Código de barras</div>
+          <div class="toggle-btn active" id="tog-qr" onclick="toggleOpt('qr')">QR asignación</div>
+          <div class="toggle-btn active" id="tog-modelo" onclick="toggleOpt('modelo')">Modelo / Marca</div>
+          <div class="toggle-btn active" id="tog-meta" onclick="toggleOpt('meta')">Área / Estado</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Tamaño de etiqueta (A4)</div>
+        <div class="field">
+          <label>Ancho (mm)</label>
+          <div class="range-wrap">
+            <input type="range" min="60" max="180" value="90" id="r-ancho" oninput="updateSize()">
+            <span class="range-val" id="v-ancho">90mm</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Alto (mm)</label>
+          <div class="range-wrap">
+            <input type="range" min="40" max="120" value="60" id="r-alto" oninput="updateSize()">
+            <span class="range-val" id="v-alto">60mm</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Equipos a imprimir</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button onclick="selAll(true)" style="flex:1;font-size:11px;padding:5px">Todos</button>
+          <button onclick="selAll(false)" style="flex:1;font-size:11px;padding:5px">Ninguno</button>
+        </div>
+        <div class="equipo-list" id="eq-list">
+          <div style="padding:12px;color:var(--text3);font-size:12px">Cargando equipos...</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="panel-footer">
+      <button class="primary" onclick="imprimir()">🖨 Imprimir etiquetas</button>
+      <button onclick="window.location='/'">← Volver al sistema</button>
+    </div>
+  </div>
+
+  <!-- ÁREA DE PREVIEW -->
+  <div class="preview-area">
+    <div class="preview-topbar">
+      <span class="preview-title">Vista previa · <span id="count-label">0 etiquetas</span></span>
+      <div style="display:flex;gap:8px">
+        <button onclick="imprimir()" class="primary">🖨 Imprimir</button>
+      </div>
+    </div>
+    <div class="labels-container" id="labels-container">
+      <p style="color:var(--text3);font-size:13px">Selecciona equipos para ver la vista previa</p>
+    </div>
+  </div>
+</div>
+
+<script>
+let token = localStorage.getItem('it_tok');
+let equipos = [];
+let seleccionados = new Set();
+let config = { formato: 'a4', barcode: true, qr: true, modelo: true, meta: true, ancho: 90, alto: 60 };
+const BASE_URL = window.location.origin;
+
+async function cargarEquipos() {
+  try {
+    const r = await fetch('/api/equipos?', { headers: { 'Authorization': 'Bearer ' + token } });
+    const d = await r.json();
+    if (!Array.isArray(d)) { document.getElementById('eq-list').innerHTML = '<div style="padding:12px;color:#ff5c6c;font-size:12px">Error al cargar. Verifica que hayas iniciado sesión.</div>'; return; }
+    equipos = d;
+    seleccionados = new Set(d.map(e => e.numero_serie));
+    renderEquiposList();
+    renderLabels();
+  } catch(e) { console.error(e); }
+}
+
+function renderEquiposList() {
+  document.getElementById('eq-list').innerHTML = equipos.map(e => `
+    <div class="eq-item" onclick="toggleEq('${e.numero_serie}')">
+      <input type="checkbox" ${seleccionados.has(e.numero_serie) ? 'checked' : ''} onclick="event.stopPropagation();toggleEq('${e.numero_serie}')">
+      <span style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.modelo}</span>
+      <span class="eq-serie">${e.numero_serie}</span>
+    </div>`).join('');
+}
+
+function toggleEq(serie) {
+  if (seleccionados.has(serie)) seleccionados.delete(serie);
+  else seleccionados.add(serie);
+  renderEquiposList();
+  renderLabels();
+}
+
+function selAll(v) {
+  if (v) seleccionados = new Set(equipos.map(e => e.numero_serie));
+  else seleccionados.clear();
+  renderEquiposList();
+  renderLabels();
+}
+
+function setFormato(f) {
+  config.formato = f;
+  document.querySelectorAll('.radio-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('fmt-' + f).classList.add('active');
+  renderLabels();
+}
+
+function toggleOpt(key) {
+  config[key] = !config[key];
+  const el = document.getElementById('tog-' + key);
+  el.classList.toggle('active', config[key]);
+  renderLabels();
+}
+
+function updateSize() {
+  config.ancho = parseInt(document.getElementById('r-ancho').value);
+  config.alto = parseInt(document.getElementById('r-alto').value);
+  document.getElementById('v-ancho').textContent = config.ancho + 'mm';
+  document.getElementById('v-alto').textContent = config.alto + 'mm';
+  renderLabels();
+}
+
+function getEstadoLabel(e) {
+  const m = { asignado:'Asignado', disponible:'Disponible', mantencion:'Mantención', baja:'Baja' };
+  return m[e] || e;
+}
+
+function renderLabels() {
+  const sel = equipos.filter(e => seleccionados.has(e.numero_serie));
+  document.getElementById('count-label').textContent = sel.length + ' etiqueta' + (sel.length !== 1 ? 's' : '');
+
+  if (!sel.length) {
+    document.getElementById('labels-container').innerHTML = '<p style="color:var(--text3);font-size:13px">Selecciona equipos para ver la vista previa</p>';
+    return;
+  }
+
+  const w = config.formato === 'zebra' ? 140 : config.ancho * 3.78;
+  const h = config.formato === 'zebra' ? 90 : config.alto * 3.78;
+  const sm = config.formato === 'zebra';
+
+  const container = document.getElementById('labels-container');
+  container.innerHTML = sel.map((e, idx) => `
+    <div class="etiqueta ${sm ? 'sm' : ''}" id="etq-${idx}" style="width:${w}px;min-height:${h}px">
+      <div class="etq-header">
+        <span class="etq-header-title">${e.estado === 'asignado' ? 'Equipo asignado' : e.estado === 'mantencion' ? 'En mantención' : 'Disponible'}</span>
+        <span class="etq-header-logo">InvTech</span>
+      </div>
+      <div class="etq-body">
+        ${config.modelo ? `<div class="etq-model">${e.modelo}</div><div class="etq-brand">${e.marca || ''}${e.area ? ' · ' + e.area : ''}</div>` : ''}
+        ${config.barcode ? `<div class="etq-barcode"><svg id="bc-${idx}"></svg></div><div class="etq-serie">${e.numero_serie}</div>` : `<div style="font-family:monospace;font-size:11px;text-align:center;color:#333;margin-bottom:6px">${e.numero_serie}</div>`}
+        ${config.meta ? `<div class="etq-meta-pills"><span class="etq-pill">${getEstadoLabel(e.estado)}</span>${e.asignado_a ? `<span class="etq-pill">${e.asignado_a}</span>` : ''}</div>` : ''}
+        ${config.qr ? `<hr class="etq-divider"><div class="etq-qr-section"><div class="etq-qr-box" id="qr-${idx}"></div><div class="etq-qr-info"><div class="etq-qr-label">Escanea para ver asignación</div><div class="etq-qr-text">${BASE_URL}/ficha/${e.numero_serie}</div></div></div>` : ''}
+      </div>
+      <div class="etq-footer"><span>${BASE_URL.replace('https://','').replace('http://','')}</span><span>${new Date().toLocaleDateString('es-CL')}</span></div>
+    </div>`).join('');
+
+  // Generar barcodes y QRs
+  setTimeout(() => {
+    sel.forEach((e, idx) => {
+      if (config.barcode) {
+        try {
+          JsBarcode('#bc-' + idx, e.numero_serie, {
+            format: 'CODE128', width: sm ? 1.2 : 1.8, height: sm ? 28 : 40,
+            displayValue: false, background: '#ffffff', lineColor: '#000000', margin: 0
+          });
+        } catch(err) { console.warn('Barcode error:', err); }
+      }
+      if (config.qr) {
+        const qrEl = document.getElementById('qr-' + idx);
+        if (qrEl) {
+          qrEl.innerHTML = '';
+          try {
+            new QRCode(qrEl, {
+              text: BASE_URL + '/ficha/' + e.numero_serie,
+              width: sm ? 42 : 56, height: sm ? 42 : 56,
+              colorDark: '#000000', colorLight: '#ffffff',
+              correctLevel: QRCode.CorrectLevel.M
+            });
+          } catch(err) { console.warn('QR error:', err); }
+        }
+      }
+    });
+  }, 100);
+}
+
+function imprimir() { window.print(); }
+
+cargarEquipos();
+</script>
+</body>
+</html>

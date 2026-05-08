@@ -15,6 +15,16 @@ app.use('/api/asignaciones', require('./routes/asignaciones'));
 app.use('/api/funcionarios', require('./routes/funcionarios'));
 app.use('/api/usuarios',     require('./routes/usuarios'));
 
+// Ficha pública de equipo (para QR)
+app.get('/ficha/:serie', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/public/ficha.html'));
+});
+
+// Página de impresión de etiquetas
+app.get('/etiquetas', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/public/etiquetas.html'));
+});
+
 // Servir frontend estático
 app.use(express.static(path.join(__dirname, '../../frontend/public')));
 app.get('*', (req, res) => {
