@@ -8,7 +8,9 @@ const xlsx = require('xlsx');
 const upload = multer({ storage: multer.memoryStorage() });
 
 function soloAdmin(req, res, next) {
-  if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo administradores' });
+  if (!req.usuario || req.usuario.rol !== 'admin') {
+    return res.status(403).json({ error: 'Solo administradores' });
+  }
   next();
 }
 
