@@ -293,6 +293,10 @@
     </div>
   </div>
 </div>
+      </table>
+    </div>
+  </div>
+</div>
 
 <!-- INGRESAR EQUIPOS -->
 <div class="page" id="page-ingresar">
@@ -590,10 +594,29 @@
 
 <!-- ADMIN -->
 <div class="page" id="page-admin">
-  <div class="page-header"><div class="page-title">Administración</div></div>
+  <div class="page-header flex-between">
+    <div>
+      <div class="page-title">Administración</div>
+      <div class="page-sub">Gestión de usuarios del sistema</div>
+    </div>
+    <button class="btn btn-primary" onclick="abrirModalUsuario()">➕ Nuevo usuario</button>
+  </div>
   <div class="card">
-    <div style="font-size:14px;font-weight:600;margin-bottom:16px">Usuarios del sistema</div>
-    <div id="admin-usuarios"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>NOMBRE</th>
+            <th>EMAIL</th>
+            <th>ROL</th>
+            <th>ESTADO</th>
+            <th>CREADO</th>
+            <th>ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody id="admin-tbody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -635,7 +658,98 @@
   </div>
 </div>
 
-<!-- AREA IMPRESIÓN -->
+<!-- MODAL USUARIO -->
+<div class="modal" id="modal-usuario">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-usuario-title">Nuevo usuario</div>
+      <button class="modal-close" onclick="closeModal('modal-usuario')">✕</button>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="form-group">
+        <label>NOMBRE *</label>
+        <input class="form-control" id="u-nombre" placeholder="Juan Pérez">
+      </div>
+      <div class="form-group">
+        <label>EMAIL *</label>
+        <input class="form-control" id="u-email" type="email" placeholder="juan@empresa.cl">
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="form-group">
+        <label>CONTRASEÑA *</label>
+        <input class="form-control" id="u-password" type="password" placeholder="Mínimo 6 caracteres">
+      </div>
+      <div class="form-group">
+        <label>ROL *</label>
+        <select class="form-control" id="u-rol">
+          <option value="operador">Operador</option>
+          <option value="auditor">Auditor</option>
+          <option value="admin">Administrador</option>
+        </select>
+      </div>
+    </div>
+    <div id="usuario-alert"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-usuario')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarUsuario()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR EQUIPO -->
+<div class="modal" id="modal-equipo">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Editar equipo</div>
+      <button class="modal-close" onclick="closeModal('modal-equipo')">✕</button>
+    </div>
+    <div class="form-grid-3" style="margin-bottom:14px">
+      <div class="form-group">
+        <label>IMEI 1 *</label>
+        <input class="form-control monospace" id="eq-imei1" placeholder="350000000000001">
+      </div>
+      <div class="form-group">
+        <label>IMEI 2</label>
+        <input class="form-control monospace" id="eq-imei2" placeholder="350000000000002">
+      </div>
+      <div class="form-group">
+        <label>NÚMERO DE SERIE</label>
+        <input class="form-control monospace" id="eq-serie" placeholder="SN-0001">
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="form-group">
+        <label>MODELO *</label>
+        <input class="form-control" id="eq-modelo" placeholder="Samsung Galaxy S23">
+      </div>
+      <div class="form-group">
+        <label>MARCA</label>
+        <input class="form-control" id="eq-marca" placeholder="Samsung">
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="form-group">
+        <label>ESTADO</label>
+        <select class="form-control" id="eq-estado-edit">
+          <option value="disponible">Disponible</option>
+          <option value="asignado">Asignado</option>
+          <option value="mantencion">Mantención</option>
+          <option value="baja">Baja</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>NOTAS</label>
+        <input class="form-control" id="eq-notas" placeholder="Notas...">
+      </div>
+    </div>
+    <div id="equipo-edit-alert"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-equipo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEquipo()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
 <div id="print-area" style="display:none"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -713,6 +827,7 @@ function showPage(name) {
   if (name === 'dashboard') cargarDashboard();
   if (name === 'equipos') buscarEquipos();
   if (name === 'auditoria') cargarAuditoria();
+  if (name === 'admin') cargarUsuarios();
   if (name === 'scanner') setTimeout(()=>document.getElementById('scan-input').focus(),100);
 }
 
@@ -766,7 +881,13 @@ function buscarEquipos() {
         <td><span class="badge badge-${e.estado}">${e.estado}</span></td>
         <td style="color:var(--text2);font-size:12px">${e.area||'-'}</td>
         <td>
-          <button class="btn btn-secondary btn-sm" onclick="abrirMovimiento(${e.id},'${e.imei1}','${e.modelo}')">Movimiento</button>
+          <div class="btn-group">
+            <button class="btn btn-secondary btn-sm" onclick="abrirMovimiento(${e.id},'${e.imei1}','${e.modelo}')">📋 Mov.</button>
+            ${usuario.rol === 'admin' ? `
+              <button class="btn btn-secondary btn-sm" onclick="abrirEditarEquipo(${e.id},'${e.imei1}','${e.imei2||''}','${e.numero_serie||''}','${e.modelo}','${e.marca||''}','${e.estado}','${e.notas||''}')">✏️</button>
+              <button class="btn btn-danger btn-sm" onclick="eliminarEquipo(${e.id},'${e.imei1}')">🗑️</button>
+            ` : ''}
+          </div>
         </td>
       </tr>
     `).join('');
@@ -1156,6 +1277,139 @@ function showAlert(id, msg, type) {
 
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
+}
+
+// === ADMIN - USUARIOS ===
+let editingUserId = null;
+
+async function cargarUsuarios() {
+  const r = await api('/usuarios');
+  if (!r) return;
+  const usuarios = await r.json();
+  const tbody = document.getElementById('admin-tbody');
+  tbody.innerHTML = usuarios.map(u => `
+    <tr>
+      <td style="font-size:13px;font-weight:500">${u.nombre}</td>
+      <td style="font-size:13px;color:var(--text2)">${u.email}</td>
+      <td>
+        <span class="badge" style="background:${u.rol==='admin'?'var(--primary)20':u.rol==='auditor'?'var(--warning)20':'var(--secondary)20'};color:${u.rol==='admin'?'var(--primary)':u.rol==='auditor'?'var(--warning)':'var(--secondary)'}">
+          ${u.rol}
+        </span>
+      </td>
+      <td><span class="badge ${u.activo?'badge-disponible':'badge-baja'}">${u.activo?'Activo':'Inactivo'}</span></td>
+      <td style="font-size:12px;color:var(--text2)">${new Date(u.created_at).toLocaleDateString('es-CL')}</td>
+      <td>
+        <div class="btn-group">
+          <button class="btn btn-secondary btn-sm" onclick="editarUsuario(${u.id},'${u.nombre}','${u.email}','${u.rol}')">✏️ Editar</button>
+          ${u.activo && u.id !== usuario.id ? `<button class="btn btn-danger btn-sm" onclick="desactivarUsuario(${u.id})">🚫 Desactivar</button>` : ''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function abrirModalUsuario() {
+  editingUserId = null;
+  document.getElementById('modal-usuario-title').textContent = 'Nuevo usuario';
+  ['u-nombre','u-email','u-password'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('u-rol').value = 'operador';
+  document.getElementById('usuario-alert').innerHTML = '';
+  document.getElementById('modal-usuario').classList.add('open');
+}
+
+function editarUsuario(id, nombre, email, rol) {
+  editingUserId = id;
+  document.getElementById('modal-usuario-title').textContent = 'Editar usuario';
+  document.getElementById('u-nombre').value = nombre;
+  document.getElementById('u-email').value = email;
+  document.getElementById('u-password').value = '';
+  document.getElementById('u-rol').value = rol;
+  document.getElementById('usuario-alert').innerHTML = '';
+  document.getElementById('modal-usuario').classList.add('open');
+}
+
+async function guardarUsuario() {
+  const nombre = document.getElementById('u-nombre').value.trim();
+  const email = document.getElementById('u-email').value.trim();
+  const password = document.getElementById('u-password').value;
+  const rol = document.getElementById('u-rol').value;
+
+  if (!nombre || !email || !rol) {
+    showAlert('usuario-alert', 'Nombre, email y rol son requeridos', 'error'); return;
+  }
+
+  if (!editingUserId && !password) {
+    showAlert('usuario-alert', 'La contraseña es requerida para nuevos usuarios', 'error'); return;
+  }
+
+  let r;
+  if (editingUserId) {
+    const body = { nombre, email, rol };
+    r = await api(`/usuarios/${editingUserId}`, { method: 'PUT', body: JSON.stringify(body) });
+    if (r && r.ok && password) {
+      await api(`/usuarios/${editingUserId}/password`, { method: 'PUT', body: JSON.stringify({ password }) });
+    }
+  } else {
+    r = await api('/usuarios', { method: 'POST', body: JSON.stringify({ nombre, email, password, rol }) });
+  }
+
+  if (!r) return;
+  const data = await r.json();
+  if (!r.ok) { showAlert('usuario-alert', data.error, 'error'); return; }
+  closeModal('modal-usuario');
+  cargarUsuarios();
+}
+
+async function desactivarUsuario(id) {
+  if (!confirm('¿Desactivar este usuario?')) return;
+  const r = await api(`/usuarios/${id}`, { method: 'DELETE' });
+  if (r && r.ok) cargarUsuarios();
+}
+
+// === ADMIN - EDITAR/ELIMINAR EQUIPOS ===
+let editingEquipoId = null;
+
+function abrirEditarEquipo(id, imei1, imei2, serie, modelo, marca, estado, notas) {
+  editingEquipoId = id;
+  document.getElementById('eq-imei1').value = imei1 || '';
+  document.getElementById('eq-imei2').value = imei2 || '';
+  document.getElementById('eq-serie').value = serie || '';
+  document.getElementById('eq-modelo').value = modelo || '';
+  document.getElementById('eq-marca').value = marca || '';
+  document.getElementById('eq-estado-edit').value = estado || 'disponible';
+  document.getElementById('eq-notas').value = notas || '';
+  document.getElementById('equipo-edit-alert').innerHTML = '';
+  document.getElementById('modal-equipo').classList.add('open');
+}
+
+async function guardarEquipo() {
+  const imei1 = document.getElementById('eq-imei1').value.trim();
+  const modelo = document.getElementById('eq-modelo').value.trim();
+  if (!imei1 || !modelo) {
+    showAlert('equipo-edit-alert', 'IMEI 1 y modelo son requeridos', 'error'); return;
+  }
+  const body = {
+    imei1, imei2: document.getElementById('eq-imei2').value.trim() || null,
+    numero_serie: document.getElementById('eq-serie').value.trim() || null,
+    modelo, marca: document.getElementById('eq-marca').value.trim() || null,
+    estado: document.getElementById('eq-estado-edit').value,
+    notas: document.getElementById('eq-notas').value.trim() || null
+  };
+  const r = await api(`/equipos/${editingEquipoId}`, { method: 'PUT', body: JSON.stringify(body) });
+  if (!r) return;
+  const data = await r.json();
+  if (!r.ok) { showAlert('equipo-edit-alert', data.error, 'error'); return; }
+  closeModal('modal-equipo');
+  buscarEquipos();
+}
+
+async function eliminarEquipo(id, imei1) {
+  if (!confirm(`¿Eliminar el equipo ${imei1}? Esta acción también eliminará su historial de movimientos.`)) return;
+  const r = await api(`/equipos/${id}`, { method: 'DELETE' });
+  if (!r) return;
+  const data = await r.json();
+  if (!r.ok) { alert(data.error); return; }
+  buscarEquipos();
 }
 
 // Init
