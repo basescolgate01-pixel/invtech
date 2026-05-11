@@ -8,9 +8,7 @@ const xlsx = require('xlsx');
 const upload = multer({ storage: multer.memoryStorage() });
 
 function soloAdmin(req, res, next) {
-  if (!req.usuario || req.usuario.rol !== 'admin') {
-    return res.status(403).json({ error: 'Solo administradores' });
-  }
+  if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo administradores' });
   next();
 }
 
@@ -52,7 +50,7 @@ router.get('/stats/resumen', auth, async (req, res) => {
       SELECT COUNT(*) as total,
         COUNT(*) FILTER (WHERE estado = 'asignado') as asignados,
         COUNT(*) FILTER (WHERE estado = 'disponible') as disponibles,
-        COUNT(*) FILTER (WHERE estado = 'mantencion') as mantencion
+        COUNT(*) FILTER (WHERE estado = 'mantencion') as mantencion, COUNT(*) FILTER (WHERE estado = 'baja') as baja
       FROM equipos
     `);
     const porArea = await pool.query(`

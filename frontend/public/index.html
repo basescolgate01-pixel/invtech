@@ -219,15 +219,42 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
         <div class="page-title">Dashboard</div>
         <div class="page-sub" id="dash-sub">Cargando...</div>
       </div>
+
+      <!-- KPIs principales -->
       <div class="kpi-grid">
-        <div class="kpi"><div class="kpi-bar" style="background:var(--primary)"></div><div class="kpi-label">Total</div><div class="kpi-val" id="kpi-total">-</div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:var(--primary)"></div><div class="kpi-label">Total equipos</div><div class="kpi-val" id="kpi-total">-</div></div>
         <div class="kpi"><div class="kpi-bar" style="background:var(--secondary)"></div><div class="kpi-label">Asignados</div><div class="kpi-val" id="kpi-asignados">-</div></div>
         <div class="kpi"><div class="kpi-bar" style="background:#8b83ff"></div><div class="kpi-label">Disponibles</div><div class="kpi-val" id="kpi-disponibles">-</div></div>
-        <div class="kpi"><div class="kpi-bar" style="background:var(--warning)"></div><div class="kpi-label">Mantención</div><div class="kpi-val" id="kpi-mantencion">-</div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:var(--warning)"></div><div class="kpi-label">En mantención</div><div class="kpi-val" id="kpi-mantencion">-</div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:var(--danger)"></div><div class="kpi-label">Dados de baja</div><div class="kpi-val" id="kpi-baja">-</div></div>
       </div>
+
+      <!-- Segunda fila: Tipos + Áreas -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <!-- Por tipo -->
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">📦 Equipos por tipo</div>
+          <div id="tipo-list"></div>
+        </div>
+        <!-- Por área -->
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">📍 Equipos por área</div>
+          <div id="area-list"></div>
+        </div>
+      </div>
+
+      <!-- Tercera fila: Últimos movimientos -->
       <div class="card">
-        <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Equipos por área</div>
-        <div id="area-list"></div>
+        <div class="flex-between" style="margin-bottom:14px">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">🕐 Últimos movimientos</div>
+          <button class="btn btn-secondary btn-sm" onclick="showPage('auditoria',document.querySelector('.nav-item:nth-child(6)'))">Ver todos →</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>FECHA</th><th>TIPO</th><th>IMEI 1</th><th>MODELO</th><th>FUNCIONARIO</th><th>REGISTRADO POR</th></tr></thead>
+            <tbody id="dash-movimientos"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -303,7 +330,7 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
           </div>
           <div class="table-wrap">
             <table class="masa-table">
-              <thead><tr><th>IMEI 1 *</th><th>IMEI 2</th><th>SERIE</th><th>MODELO *</th><th>MARCA</th><th>NOTAS</th><th></th></tr></thead>
+              <thead><tr><th>IMEI 1 *</th><th>IMEI 2</th><th>SERIE</th><th>MODELO *</th><th>MARCA</th><th>TIPO</th><th>NOTAS</th><th></th></tr></thead>
               <tbody id="masivo-tbody"></tbody>
             </table>
           </div>
@@ -353,7 +380,12 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
       <div class="page-header"><div class="page-title">Auditoría</div><div class="page-sub">Historial de movimientos</div></div>
       <div class="card" style="margin-bottom:16px">
         <div class="form-grid" style="gap:12px">
-          <div class="form-group"><label>Buscar</label><input class="form-control monospace" id="aud-search" placeholder="IMEI, serie, modelo..." oninput="cargarAuditoria()"></div>
+          <div class="form-group"><label>Buscar</label>
+            <div class="flex">
+              <input class="form-control monospace" id="aud-search" placeholder="IMEI, serie, modelo..." style="flex:1" onkeydown="if(event.key==='Enter')cargarAuditoria()">
+              <button class="btn btn-primary" onclick="cargarAuditoria()">🔍</button>
+            </div>
+          </div>
           <div class="form-group"><label>Tipo</label>
             <select class="form-control" id="aud-tipo" onchange="cargarAuditoria()">
               <option value="">Todos</option>
@@ -826,18 +858,71 @@ function showPage(name, el) {
 
 // DASHBOARD
 async function cargarDashboard() {
-  const r = await api('/equipos/stats/resumen'); if (!r) return;
-  const data = await r.json();
+  const [rStats, rMovs] = await Promise.all([
+    api('/equipos/stats/resumen'),
+    api('/asignaciones?limit=10')
+  ]);
+  if (!rStats) return;
+  const data = await rStats.json();
+
+  // KPIs
   document.getElementById('kpi-total').textContent = data.kpis.total;
   document.getElementById('kpi-asignados').textContent = data.kpis.asignados;
   document.getElementById('kpi-disponibles').textContent = data.kpis.disponibles;
   document.getElementById('kpi-mantencion').textContent = data.kpis.mantencion;
+  document.getElementById('kpi-baja').textContent = data.kpis.baja || 0;
   document.getElementById('dash-sub').textContent = `Total: ${data.kpis.total} equipos registrados`;
-  document.getElementById('area-list').innerHTML = data.por_area.map(a => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface2);border-radius:6px;margin-bottom:6px">
+
+  // Por tipo
+  const tipoList = document.getElementById('tipo-list');
+  if (data.por_tipo && data.por_tipo.length) {
+    tipoList.innerHTML = data.por_tipo.map(t => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--surface2);border-radius:6px;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:18px">${t.icono||'📱'}</span>
+          <span style="font-size:13px">${t.tipo}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-weight:600;color:var(--primary);font-size:15px">${t.cantidad}</span>
+          <div style="width:80px;height:4px;background:var(--surface3);border-radius:2px">
+            <div style="width:${Math.round(t.cantidad/data.kpis.total*100)}%;height:100%;background:var(--primary);border-radius:2px"></div>
+          </div>
+        </div>
+      </div>`).join('');
+  } else {
+    tipoList.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:8px">Sin datos de tipos</div>';
+  }
+
+  // Por área
+  const areaList = document.getElementById('area-list');
+  areaList.innerHTML = data.por_area.map(a => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--surface2);border-radius:6px;margin-bottom:6px">
       <span style="font-size:13px">${a.area}</span>
-      <span style="font-weight:600;color:var(--primary)">${a.cantidad}</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-weight:600;color:var(--secondary);font-size:15px">${a.cantidad}</span>
+        <div style="width:80px;height:4px;background:var(--surface3);border-radius:2px">
+          <div style="width:${Math.round(a.cantidad/data.kpis.total*100)}%;height:100%;background:var(--secondary);border-radius:2px"></div>
+        </div>
+      </div>
     </div>`).join('');
+
+  // Últimos movimientos
+  if (rMovs && rMovs.ok) {
+    const movs = await rMovs.json();
+    const tbody = document.getElementById('dash-movimientos');
+    if (!movs.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:20px">Sin movimientos recientes</td></tr>';
+    } else {
+      tbody.innerHTML = movs.slice(0,8).map(m => `<tr>
+        <td style="font-size:12px;white-space:nowrap">${new Date(m.fecha).toLocaleString('es-CL')}</td>
+        <td><span class="badge badge-${m.tipo}">${m.tipo}</span></td>
+        <td class="monospace" style="font-size:12px">${m.imei1||'-'}</td>
+        <td style="font-size:13px">${m.modelo||'-'}</td>
+        <td style="font-size:12px;color:var(--text2)">${m.funcionario||'-'}</td>
+        <td style="font-size:12px;color:var(--text2)">${m.registrado_por||'-'}</td>
+      </tr>`).join('');
+    }
+  }
 }
 
 // EQUIPOS
@@ -891,7 +976,8 @@ async function crearEquipoManual() {
 
 function addFilaMasivo() {
   const tr = document.createElement('tr');
-  tr.innerHTML = `<td><input type="text" placeholder="350000000000001"></td><td><input type="text" placeholder="350000000000002"></td><td><input type="text" placeholder="SN-001"></td><td><input type="text" placeholder="Samsung Galaxy S23"></td><td><input type="text" placeholder="Samsung"></td><td><input type="text" placeholder="Notas..."></td><td><button class="btn-del" onclick="this.closest('tr').remove();updateMasivoCount()">🗑</button></td>`;
+  const tipoOpts = tipos.map(t => `<option value="${t.id}">${t.icono} ${t.nombre}</option>`).join('');
+  tr.innerHTML = `<td><input type="text" placeholder="350000000000001"></td><td><input type="text" placeholder="350000000000002"></td><td><input type="text" placeholder="SN-001"></td><td><input type="text" placeholder="Samsung Galaxy S23"></td><td><input type="text" placeholder="Samsung"></td><td><select style="width:100%;background:var(--surface2);border:1px solid transparent;color:var(--text);padding:7px 4px;font-size:12px;font-family:inherit"><option value="">Sin tipo</option>${tipoOpts}</select></td><td><input type="text" placeholder="Notas..."></td><td><button class="btn-del" onclick="this.closest('tr').remove();updateMasivoCount()">🗑</button></td>`;
   document.getElementById('masivo-tbody').appendChild(tr);
   updateMasivoCount();
 }
