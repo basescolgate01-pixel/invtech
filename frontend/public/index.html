@@ -17,7 +17,7 @@
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;margin:0;padding:0}
   
   /* SIDEBAR */
-  .sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;z-index:200;flex-shrink:0}
+  .sidebar{width:220px;min-width:220px;max-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;align-self:flex-start;flex-shrink:0;z-index:10}
   .sidebar-logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
   .logo-icon{width:32px;height:32px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
   .logo-text{font-weight:700;font-size:16px}
@@ -34,7 +34,7 @@
   .btn-logout:hover{background:var(--danger)20;color:var(--danger);border-color:var(--danger)}
   
   /* MAIN */
-  .main{flex:1;padding:28px;min-height:100vh;overflow-y:auto;overflow-x:hidden;min-width:0}
+  .main{flex:1;padding:28px;min-height:100vh;overflow-y:auto;overflow-x:hidden;min-width:0;max-width:calc(100% - 220px)}
   .page{display:none}.page.active{display:block}
   .page-header{margin-bottom:24px}
   .page-title{font-size:22px;font-weight:700}
@@ -204,7 +204,7 @@
 </div>
 
 <!-- APP -->
-<div id="app" style="display:none;flex-direction:row;width:100%;min-height:100vh">
+<div id="app" style="display:none">
 
 <!-- SIDEBAR -->
 <div class="sidebar">
@@ -805,7 +805,7 @@ async function api(path, options={}) {
 
 function initApp() {
   document.getElementById('login-page').classList.add('hidden');
-  document.getElementById('app').style.display = 'flex';
+  const appEl=document.getElementById('app');appEl.style.display='flex';appEl.style.flexDirection='row';appEl.style.minHeight='100vh';appEl.style.width='100%';
   document.getElementById('sidebar-name').textContent = usuario.nombre.split(' ')[0];
   document.getElementById('sidebar-avatar').textContent = usuario.nombre[0].toUpperCase();
   document.getElementById('sidebar-rol').textContent = usuario.rol;
