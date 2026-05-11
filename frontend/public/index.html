@@ -204,7 +204,7 @@
 </div>
 
 <!-- APP -->
-<div id="app" style="display:none;width:100%">
+<div id="app" style="display:none;width:100%;min-height:100vh">
 
 <!-- SIDEBAR -->
 <div class="sidebar">
@@ -826,7 +826,7 @@ function showPage(name) {
   event.currentTarget.classList.add('active');
   if (name === 'dashboard') cargarDashboard();
   if (name === 'equipos') buscarEquipos();
-  if (name === 'auditoria') cargarAuditoria();
+  if (name === 'auditoria') { cargarAuditoria(); }
   if (name === 'admin') cargarUsuarios();
   if (name === 'scanner') setTimeout(()=>document.getElementById('scan-input').focus(),100);
 }
