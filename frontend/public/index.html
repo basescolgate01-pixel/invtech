@@ -283,7 +283,10 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
             <div class="form-group"><label>Modelo *</label><input class="form-control" id="m-modelo" placeholder="Samsung Galaxy S23"></div>
             <div class="form-group"><label>Marca</label><input class="form-control" id="m-marca" placeholder="Samsung"></div>
           </div>
-          <div class="form-group" style="margin-bottom:20px"><label>Notas</label><input class="form-control" id="m-notas" placeholder="Estado inicial, accesorios..."></div>
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="form-group"><label>Tipo de equipo</label><select class="form-control" id="m-tipo"><option value="">Sin tipo</option></select></div>
+            <div class="form-group"><label>Notas</label><input class="form-control" id="m-notas" placeholder="Estado inicial, accesorios..."></div>
+          </div>
           <div id="manual-alert"></div>
           <button class="btn btn-primary" onclick="crearEquipoManual()">➕ Crear equipo</button>
         </div>
@@ -472,16 +475,142 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
 
     <!-- ADMIN -->
     <div class="page" id="page-admin">
-      <div class="page-header flex-between">
-        <div><div class="page-title">Administración</div><div class="page-sub">Gestión de usuarios</div></div>
-        <button class="btn btn-primary" onclick="abrirModalUsuario()">➕ Nuevo usuario</button>
+      <div class="page-header"><div class="page-title">Administración</div><div class="page-sub">Gestión de usuarios, funcionarios y tipos</div></div>
+      
+      <div class="tabs">
+        <button class="tab active" onclick="switchAdminTab('usuarios',this)">👥 Usuarios</button>
+        <button class="tab" onclick="switchAdminTab('funcionarios',this)">🧑‍💼 Funcionarios</button>
+        <button class="tab" onclick="switchAdminTab('tipos',this)">📦 Tipos de equipo</button>
       </div>
-      <div class="card">
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>NOMBRE</th><th>EMAIL</th><th>ROL</th><th>ESTADO</th><th>CREADO</th><th>ACCIONES</th></tr></thead>
-            <tbody id="admin-tbody"></tbody>
-          </table>
+
+      <!-- Usuarios -->
+      <div id="admin-usuarios">
+        <div class="flex-between" style="margin-bottom:16px">
+          <div style="font-size:14px;font-weight:600">Usuarios del sistema</div>
+          <button class="btn btn-primary" onclick="abrirModalUsuario()">➕ Nuevo usuario</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>NOMBRE</th><th>EMAIL</th><th>ROL</th><th>ESTADO</th><th>CREADO</th><th>ACCIONES</th></tr></thead>
+              <tbody id="admin-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Funcionarios -->
+      <div id="admin-funcionarios" style="display:none">
+        <div class="tabs" style="margin-bottom:16px">
+          <button class="tab active" onclick="switchFuncTab('lista',this)">📋 Lista</button>
+          <button class="tab" onclick="switchFuncTab('nuevo',this)">➕ Nuevo</button>
+          <button class="tab" onclick="switchFuncTab('masivo',this)">📋 Masivo</button>
+          <button class="tab" onclick="switchFuncTab('excel',this)">📊 Excel</button>
+        </div>
+
+        <!-- Lista funcionarios -->
+        <div id="func-lista">
+          <div class="search-row" style="margin-bottom:14px">
+            <div class="search-wrap">
+              <span class="search-icon">🔍</span>
+              <input class="search-input" id="func-search" placeholder="Buscar por nombre, RUT, cargo..." oninput="cargarFuncionariosAdmin()">
+            </div>
+          </div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>NOMBRE</th><th>RUT</th><th>CARGO</th><th>ÁREA</th><th>EMAIL</th><th>ACCIONES</th></tr></thead>
+                <tbody id="func-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nuevo funcionario -->
+        <div id="func-nuevo" style="display:none">
+          <div class="card">
+            <div style="font-size:14px;font-weight:600;margin-bottom:16px">Nuevo funcionario</div>
+            <div class="form-grid" style="margin-bottom:14px">
+              <div class="form-group"><label>Nombre completo *</label><input class="form-control" id="fn-nombre" placeholder="Juan Pérez González"></div>
+              <div class="form-group"><label>RUT</label><input class="form-control monospace" id="fn-rut" placeholder="12.345.678-9"></div>
+            </div>
+            <div class="form-grid" style="margin-bottom:14px">
+              <div class="form-group"><label>Cargo</label><input class="form-control" id="fn-cargo" placeholder="Técnico TI"></div>
+              <div class="form-group"><label>Área</label>
+                <select class="form-control" id="fn-area">
+                  <option value="">Sin área</option>
+                  <option value="1">TI</option>
+                  <option value="2">Ventas</option>
+                  <option value="3">RRHH</option>
+                  <option value="4">Operaciones</option>
+                  <option value="5">Finanzas</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-grid" style="margin-bottom:20px">
+              <div class="form-group"><label>Email</label><input class="form-control" id="fn-email" type="email" placeholder="juan@empresa.cl"></div>
+              <div class="form-group"><label>Teléfono</label><input class="form-control monospace" id="fn-telefono" placeholder="+56912345678"></div>
+            </div>
+            <div id="func-nuevo-alert"></div>
+            <button class="btn btn-primary" onclick="crearFuncionario()">➕ Crear funcionario</button>
+          </div>
+        </div>
+
+        <!-- Masivo funcionarios -->
+        <div id="func-masivo" style="display:none">
+          <div class="card">
+            <div class="flex-between" style="margin-bottom:16px">
+              <div style="font-size:14px;font-weight:600">Ingreso masivo de funcionarios</div>
+              <div class="btn-group">
+                <button class="btn btn-secondary btn-sm" onclick="addFilaFuncionario()">+ Fila</button>
+                <button class="btn btn-secondary btn-sm" onclick="addFilasFuncionario(10)">+ 10 filas</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="masa-table">
+                <thead><tr><th>NOMBRE *</th><th>RUT</th><th>CARGO</th><th>ÁREA</th><th>EMAIL</th><th>TELÉFONO</th><th></th></tr></thead>
+                <tbody id="func-masivo-tbody"></tbody>
+              </table>
+            </div>
+            <div id="func-masivo-alert" class="mt-16"></div>
+            <div class="mt-16">
+              <button class="btn btn-primary" onclick="enviarFuncionariosMasivo()">💾 Guardar todos</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Excel funcionarios -->
+        <div id="func-excel" style="display:none">
+          <div class="card">
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px">Importar funcionarios desde Excel</div>
+            <div style="color:var(--text2);font-size:13px;margin-bottom:16px">Columnas: nombre, rut, cargo, area, email, telefono</div>
+            <div class="alert alert-info" style="margin-bottom:16px">Las áreas disponibles son: <strong>TI, Ventas, RRHH, Operaciones, Finanzas</strong></div>
+            <div class="btn-group" style="margin-bottom:16px">
+              <button class="btn btn-secondary" onclick="descargarPlantillaFunc()">⬇️ Descargar plantilla</button>
+            </div>
+            <div class="form-group" style="margin-bottom:16px">
+              <label>Archivo Excel</label>
+              <input type="file" id="func-excel-file" accept=".xlsx,.xls" class="form-control" onchange="document.getElementById('func-excel-upload-btn').style.display='inline-flex'">
+            </div>
+            <div id="func-excel-alert"></div>
+            <button class="btn btn-primary" id="func-excel-upload-btn" style="display:none" onclick="subirExcelFunc()">📊 Importar funcionarios</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tipos de equipo -->
+      <div id="admin-tipos" style="display:none">
+        <div class="flex-between" style="margin-bottom:16px">
+          <div style="font-size:14px;font-weight:600">Tipos de equipo</div>
+          <button class="btn btn-primary" onclick="abrirModalTipo()">➕ Nuevo tipo</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ICONO</th><th>NOMBRE</th><th>DESCRIPCIÓN</th><th>ACCIONES</th></tr></thead>
+              <tbody id="tipos-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -567,8 +696,9 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
           <option value="baja">Baja</option>
         </select>
       </div>
-      <div class="form-group"><label>Notas</label><input class="form-control" id="eq-notas"></div>
+      <div class="form-group"><label>Tipo de equipo</label><select class="form-control" id="eq-tipo-edit"><option value="">Sin tipo</option></select></div>
     </div>
+    <div class="form-group" style="margin-bottom:14px"><label>Notas</label><input class="form-control" id="eq-notas"></div>
     <div id="equipo-edit-alert"></div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-equipo')">Cancelar</button>
@@ -577,7 +707,55 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<!-- MODAL TIPO EQUIPO -->
+<div class="modal" id="modal-tipo">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header"><div class="modal-title" id="modal-tipo-title">Nuevo tipo</div><button class="modal-close" onclick="closeModal('modal-tipo')">✕</button></div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="form-group"><label>Nombre *</label><input class="form-control" id="t-nombre" placeholder="Celular"></div>
+      <div class="form-group"><label>Icono</label><input class="form-control" id="t-icono" placeholder="📱" style="font-size:20px"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:14px"><label>Descripción</label><input class="form-control" id="t-descripcion" placeholder="Ej: Teléfonos móviles y smartphones"></div>
+    <div id="tipo-alert"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-tipo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarTipo()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR FUNCIONARIO -->
+<div class="modal" id="modal-func">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title">Editar funcionario</div><button class="modal-close" onclick="closeModal('modal-func')">✕</button></div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="form-group"><label>Nombre *</label><input class="form-control" id="ef-nombre"></div>
+      <div class="form-group"><label>RUT</label><input class="form-control monospace" id="ef-rut"></div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="form-group"><label>Cargo</label><input class="form-control" id="ef-cargo"></div>
+      <div class="form-group"><label>Área</label>
+        <select class="form-control" id="ef-area">
+          <option value="">Sin área</option>
+          <option value="1">TI</option>
+          <option value="2">Ventas</option>
+          <option value="3">RRHH</option>
+          <option value="4">Operaciones</option>
+          <option value="5">Finanzas</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="form-group"><label>Email</label><input class="form-control" id="ef-email" type="email"></div>
+      <div class="form-group"><label>Teléfono</label><input class="form-control monospace" id="ef-telefono"></div>
+    </div>
+    <div id="func-edit-alert"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-func')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarFuncionario()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
 const API = '';
@@ -628,6 +806,7 @@ function initApp() {
   if (usuario.rol === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
   cargarDashboard();
   cargarFuncionarios();
+  cargarTipos();
   addFilasMasivo(3);
   cargarTodosEtiquetas();
 }
@@ -702,7 +881,7 @@ async function crearEquipoManual() {
   const imei1 = document.getElementById('m-imei1').value.trim();
   const modelo = document.getElementById('m-modelo').value.trim();
   if (!imei1||!modelo) { showAlert('manual-alert','IMEI 1 y Modelo son requeridos','error'); return; }
-  const body = {imei1, imei2:document.getElementById('m-imei2').value.trim()||null, numero_serie:document.getElementById('m-serie').value.trim()||null, modelo, marca:document.getElementById('m-marca').value.trim()||null, notas:document.getElementById('m-notas').value.trim()||null};
+  const body = {imei1, imei2:document.getElementById('m-imei2').value.trim()||null, numero_serie:document.getElementById('m-serie').value.trim()||null, modelo, marca:document.getElementById('m-marca').value.trim()||null, notas:document.getElementById('m-notas').value.trim()||null, tipo_id:document.getElementById('m-tipo').value||null};
   const r = await api('/equipos',{method:'POST',body:JSON.stringify(body)}); if (!r) return;
   const data = await r.json();
   if (!r.ok) { showAlert('manual-alert',data.error,'error'); return; }
@@ -1007,6 +1186,197 @@ function showAlert(id,msg,type) {
   setTimeout(()=>{ const el=document.getElementById(id); if(el) el.innerHTML=''; },6000);
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// TIPOS
+let tipos = [];
+let editingTipoId = null;
+
+async function cargarTipos() {
+  const r = await api('/tipos'); if (!r) return;
+  tipos = await r.json();
+  // Llenar selects de tipo
+  ['m-tipo','eq-tipo-edit'].forEach(id => {
+    const sel = document.getElementById(id); if (!sel) return;
+    const val = sel.value;
+    sel.innerHTML = '<option value="">Sin tipo</option>';
+    tipos.forEach(t => { const o=document.createElement('option'); o.value=t.id; o.textContent=`${t.icono} ${t.nombre}`; sel.appendChild(o); });
+    sel.value = val;
+  });
+  // Tabla tipos
+  const tbody = document.getElementById('tipos-tbody'); if (!tbody) return;
+  tbody.innerHTML = tipos.map(t => `<tr>
+    <td style="font-size:22px">${t.icono}</td>
+    <td style="font-size:14px;font-weight:500">${t.nombre}</td>
+    <td style="color:var(--text2);font-size:13px">${t.descripcion||'-'}</td>
+    <td><button class="btn btn-secondary btn-sm" onclick="editarTipo(${t.id},'${t.nombre}','${t.icono}','${t.descripcion||''}')">✏️ Editar</button></td>
+  </tr>`).join('');
+}
+
+function abrirModalTipo() {
+  editingTipoId = null;
+  document.getElementById('modal-tipo-title').textContent = 'Nuevo tipo';
+  ['t-nombre','t-descripcion'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('t-icono').value = '📱';
+  document.getElementById('tipo-alert').innerHTML = '';
+  document.getElementById('modal-tipo').classList.add('open');
+}
+
+function editarTipo(id, nombre, icono, descripcion) {
+  editingTipoId = id;
+  document.getElementById('modal-tipo-title').textContent = 'Editar tipo';
+  document.getElementById('t-nombre').value = nombre;
+  document.getElementById('t-icono').value = icono;
+  document.getElementById('t-descripcion').value = descripcion;
+  document.getElementById('tipo-alert').innerHTML = '';
+  document.getElementById('modal-tipo').classList.add('open');
+}
+
+async function guardarTipo() {
+  const nombre = document.getElementById('t-nombre').value.trim();
+  const icono = document.getElementById('t-icono').value.trim() || '📱';
+  const descripcion = document.getElementById('t-descripcion').value.trim();
+  if (!nombre) { showAlert('tipo-alert','Nombre requerido','error'); return; }
+  const body = {nombre, icono, descripcion};
+  const r = editingTipoId
+    ? await api(`/tipos/${editingTipoId}`,{method:'PUT',body:JSON.stringify(body)})
+    : await api('/tipos',{method:'POST',body:JSON.stringify(body)});
+  if (!r) return;
+  const data = await r.json();
+  if (!r.ok) { showAlert('tipo-alert',data.error,'error'); return; }
+  closeModal('modal-tipo');
+  cargarTipos();
+}
+
+// ADMIN TABS
+function switchAdminTab(tab, el) {
+  ['admin-usuarios','admin-funcionarios','admin-tipos'].forEach(t => document.getElementById(t).style.display='none');
+  document.getElementById('admin-'+tab).style.display = 'block';
+  document.querySelectorAll('#page-admin .tabs:first-of-type .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  if (tab==='funcionarios') cargarFuncionariosAdmin();
+  if (tab==='tipos') cargarTipos();
+}
+
+// FUNCIONARIOS ADMIN
+let editingFuncId = null;
+
+function switchFuncTab(tab, el) {
+  ['lista','nuevo','masivo','excel'].forEach(t => document.getElementById('func-'+t).style.display='none');
+  document.getElementById('func-'+tab).style.display = 'block';
+  document.querySelectorAll('#admin-funcionarios .tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+async function cargarFuncionariosAdmin() {
+  const q = document.getElementById('func-search')?.value || '';
+  const r = await api(`/funcionarios${q?'?q='+encodeURIComponent(q):''}`); if (!r) return;
+  const funcs = await r.json();
+  const tbody = document.getElementById('func-tbody');
+  if (!funcs.length) { tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:32px">No hay funcionarios</td></tr>'; return; }
+  tbody.innerHTML = funcs.map(f => `<tr>
+    <td style="font-size:13px;font-weight:500">${f.nombre}</td>
+    <td class="monospace" style="font-size:12px;color:var(--text2)">${f.rut||'-'}</td>
+    <td style="font-size:13px;color:var(--text2)">${f.cargo||'-'}</td>
+    <td style="font-size:13px;color:var(--text2)">${f.area||'-'}</td>
+    <td style="font-size:12px;color:var(--text2)">${f.email||'-'}</td>
+    <td><div class="btn-group">
+      <button class="btn btn-secondary btn-sm" onclick="abrirEditarFunc(${f.id},'${f.nombre}','${f.rut||''}','${f.cargo||''}',${f.area_id||'null'},'${f.email||''}','${f.telefono||''}')">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="desactivarFunc(${f.id})">🚫</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+async function crearFuncionario() {
+  const nombre = document.getElementById('fn-nombre').value.trim();
+  if (!nombre) { showAlert('func-nuevo-alert','Nombre requerido','error'); return; }
+  const body = {
+    nombre, rut: document.getElementById('fn-rut').value.trim()||null,
+    cargo: document.getElementById('fn-cargo').value.trim()||null,
+    area_id: document.getElementById('fn-area').value||null,
+    email: document.getElementById('fn-email').value.trim()||null,
+    telefono: document.getElementById('fn-telefono').value.trim()||null
+  };
+  const r = await api('/funcionarios',{method:'POST',body:JSON.stringify(body)}); if (!r) return;
+  const data = await r.json();
+  if (!r.ok) { showAlert('func-nuevo-alert',data.error,'error'); return; }
+  showAlert('func-nuevo-alert','✅ Funcionario creado correctamente','success');
+  ['fn-nombre','fn-rut','fn-cargo','fn-email','fn-telefono'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fn-area').value='';
+}
+
+function abrirEditarFunc(id,nombre,rut,cargo,area_id,email,telefono) {
+  editingFuncId = id;
+  document.getElementById('ef-nombre').value = nombre;
+  document.getElementById('ef-rut').value = rut;
+  document.getElementById('ef-cargo').value = cargo;
+  document.getElementById('ef-area').value = area_id || '';
+  document.getElementById('ef-email').value = email;
+  document.getElementById('ef-telefono').value = telefono;
+  document.getElementById('func-edit-alert').innerHTML = '';
+  document.getElementById('modal-func').classList.add('open');
+}
+
+async function guardarFuncionario() {
+  const nombre = document.getElementById('ef-nombre').value.trim();
+  if (!nombre) { showAlert('func-edit-alert','Nombre requerido','error'); return; }
+  const body = {
+    nombre, rut: document.getElementById('ef-rut').value.trim()||null,
+    cargo: document.getElementById('ef-cargo').value.trim()||null,
+    area_id: document.getElementById('ef-area').value||null,
+    email: document.getElementById('ef-email').value.trim()||null,
+    telefono: document.getElementById('ef-telefono').value.trim()||null
+  };
+  const r = await api(`/funcionarios/${editingFuncId}`,{method:'PUT',body:JSON.stringify(body)}); if (!r) return;
+  const data = await r.json();
+  if (!r.ok) { showAlert('func-edit-alert',data.error,'error'); return; }
+  closeModal('modal-func'); cargarFuncionariosAdmin();
+}
+
+async function desactivarFunc(id) {
+  if (!confirm('¿Desactivar este funcionario?')) return;
+  const r = await api(`/funcionarios/${id}`,{method:'DELETE'});
+  if (r&&r.ok) cargarFuncionariosAdmin();
+}
+
+// MASIVO FUNCIONARIOS
+function addFilaFuncionario() {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><input type="text" placeholder="Juan Pérez"></td><td><input type="text" class="monospace" placeholder="12.345.678-9"></td><td><input type="text" placeholder="Cargo"></td><td><input type="text" placeholder="TI"></td><td><input type="text" placeholder="email@empresa.cl"></td><td><input type="text" placeholder="+569..."></td><td><button class="btn-del" onclick="this.closest('tr').remove()">🗑</button></td>`;
+  document.getElementById('func-masivo-tbody').appendChild(tr);
+}
+function addFilasFuncionario(n) { for(let i=0;i<n;i++) addFilaFuncionario(); }
+
+async function enviarFuncionariosMasivo() {
+  const funcionarios = [];
+  document.querySelectorAll('#func-masivo-tbody tr').forEach(tr => {
+    const inp = tr.querySelectorAll('input');
+    const nombre = inp[0].value.trim();
+    if (nombre) funcionarios.push({nombre, rut:inp[1].value.trim()||null, cargo:inp[2].value.trim()||null, area:inp[3].value.trim()||null, email:inp[4].value.trim()||null, telefono:inp[5].value.trim()||null});
+  });
+  if (!funcionarios.length) { showAlert('func-masivo-alert','No hay funcionarios para guardar','error'); return; }
+  const r = await api('/funcionarios/masivo',{method:'POST',body:JSON.stringify({funcionarios})}); if (!r) return;
+  const data = await r.json();
+  const {exitosos,errores,total} = data.resultados;
+  showAlert('func-masivo-alert',`✅ ${exitosos} de ${total} funcionarios creados.${errores.length?` ⚠️ ${errores.length} errores.`:''}`, exitosos>0?'success':'error');
+  if (exitosos>0) { document.getElementById('func-masivo-tbody').innerHTML=''; addFilasFuncionario(3); }
+}
+
+async function descargarPlantillaFunc() {
+  const r = await fetch(`${API}/api/funcionarios/plantilla`,{headers:{'Authorization':`Bearer ${token}`}});
+  const blob = await r.blob();
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='plantilla_funcionarios.xlsx'; a.click();
+}
+
+async function subirExcelFunc() {
+  const file = document.getElementById('func-excel-file').files[0]; if (!file) return;
+  const fd = new FormData(); fd.append('archivo', file);
+  showAlert('func-excel-alert','⏳ Importando...','info');
+  const r = await fetch(`${API}/api/funcionarios/importar`,{method:'POST',headers:{'Authorization':`Bearer ${token}`},body:fd});
+  const data = await r.json();
+  if (!r.ok) { showAlert('func-excel-alert',data.error,'error'); return; }
+  const {exitosos,errores,total} = data.resultados;
+  showAlert('func-excel-alert',`✅ ${exitosos} de ${total} funcionarios importados.${errores.length?` ⚠️ ${errores.length} errores.`:''}`, exitosos>0?'success':'error');
+}
 
 // INIT
 if (token) { initApp(); } else { document.getElementById('login-page').classList.remove('hidden'); }

@@ -6,14 +6,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Rutas API
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/equipos', require('./routes/equipos'));
 app.use('/api/asignaciones', require('./routes/asignaciones'));
 app.use('/api/funcionarios', require('./routes/funcionarios'));
 app.use('/api/usuarios', require('./routes/usuarios'));
+app.use('/api/tipos', require('./routes/tipos'));
 
-// Servir frontend
 app.use(express.static(path.join(__dirname, '../../frontend/public')));
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../../frontend/public/index.html'));
