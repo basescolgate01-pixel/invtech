@@ -3,178 +3,159 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>InvTech - Sistema de Inventario</title>
+<title>InvTech</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
-  
-  *{margin:0;padding:0;box-sizing:border-box}
-  :root{
-    --bg:#0f0f11;--surface:#16161a;--surface2:#1e1e24;--surface3:#26262e;
-    --primary:#6c63ff;--secondary:#2dd4a0;--danger:#ff5c6c;--warning:#ffb020;
-    --text:#e8e8f0;--text2:#9898b0;--text3:#5858708;--border:#2a2a32;
-    --radius:10px;--radius-sm:6px
-  }
-  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);margin:0;padding:0}
-  
-  /* SIDEBAR */
-  .sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
-  .sidebar-logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-  .logo-icon{width:32px;height:32px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
-  .logo-text{font-weight:700;font-size:16px}
-  .sidebar-nav{padding:12px;flex:1;overflow-y:auto}
-  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;color:var(--text2);transition:.15s;margin-bottom:2px;text-decoration:none}
-  .nav-item:hover{background:var(--surface2);color:var(--text)}
-  .nav-item.active{background:var(--primary)20;color:var(--primary)}
-  .sidebar-user{padding:12px;border-top:1px solid var(--border)}
-  .user-info{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--radius-sm)}
-  .avatar{width:32px;height:32px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
-  .user-name{font-size:13px;font-weight:500}
-  .user-rol{font-size:11px;color:var(--text2)}
-  .btn-logout{width:100%;margin-top:8px;padding:8px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;transition:.15s}
-  .btn-logout:hover{background:var(--danger)20;color:var(--danger);border-color:var(--danger)}
-  
-  /* MAIN */
-  .main{display:block;position:absolute;top:0;left:220px;right:0;padding:28px;min-height:100vh;overflow-y:scroll;box-sizing:border-box}
-  .page{display:none}.page.active{display:block}
-  .page-header{margin-bottom:24px}
-  .page-title{font-size:22px;font-weight:700}
-  .page-sub{color:var(--text2);font-size:14px;margin-top:4px}
-  
-  /* CARDS */
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
-  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-  .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
-  .kpi-bar{height:3px;border-radius:2px;margin-bottom:14px}
-  .kpi-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
-  .kpi-value{font-size:32px;font-weight:700;margin-top:4px;font-family:'DM Mono',monospace}
-  
-  /* BUTTONS */
-  .btn{padding:9px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:.15s;display:inline-flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif}
-  .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#5a52e8}
-  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{background:var(--surface3)}
-  .btn-success{background:var(--secondary);color:#000}.btn-success:hover{background:#25b88e}
-  .btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#e04d5c}
-  .btn-warning{background:var(--warning);color:#000}
-  .btn-sm{padding:6px 12px;font-size:12px}
-  .btn-group{display:flex;gap:8px;flex-wrap:wrap}
-  
-  /* FORMS */
-  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-  .form-group{display:flex;flex-direction:column;gap:6px}
-  .form-group label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
-  .form-control{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:var(--radius-sm);font-size:14px;font-family:'DM Sans',sans-serif;transition:.15s}
-  .form-control:focus{outline:none;border-color:var(--primary);background:var(--surface3)}
-  .form-control::placeholder{color:var(--text2)}
-  
-  /* TABLE */
-  .table-wrap{overflow-x:auto}
-  table{width:100%;border-collapse:collapse}
-  th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
-  td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border)20}
-  tr:hover td{background:var(--surface2)40}
-  
-  /* BADGES */
-  .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block}
-  .badge-disponible{background:#2dd4a020;color:#2dd4a0}
-  .badge-asignado{background:#6c63ff20;color:#6c63ff}
-  .badge-mantencion{background:#ffb02020;color:#ffb020}
-  .badge-baja{background:#ff5c6c20;color:#ff5c6c}
-  .badge-ingreso{background:#2dd4a020;color:#2dd4a0}
-  .badge-devolucion{background:#ffb02020;color:#ffb020}
-  
-  /* SEARCH */
-  .search-bar{display:flex;gap:10px;margin-bottom:16px;align-items:center}
-  .search-input{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px 9px 36px;border-radius:var(--radius-sm);font-size:14px;font-family:'DM Sans',sans-serif}
-  .search-input:focus{outline:none;border-color:var(--primary)}
-  .search-wrap{position:relative;flex:1}
-  .search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:14px}
-  
-  /* MODAL */
-  .modal{display:none;position:fixed;inset:0;background:#00000080;z-index:1000;align-items:center;justify-content:center;padding:20px}
-  .modal.open{display:flex}
-  .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto}
-  .modal-box.wide{max-width:900px}
-  .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-  .modal-title{font-size:16px;font-weight:600}
-  .modal-close{background:none;border:none;color:var(--text2);cursor:pointer;font-size:18px;padding:4px}
-  .modal-close:hover{color:var(--text)}
-  .modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
-  
-  /* TABS */
-  .tabs{display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:var(--radius-sm);margin-bottom:20px;width:fit-content}
-  .tab{padding:7px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);transition:.15s;border:none;background:none;font-family:'DM Sans',sans-serif}
-  .tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px #0004}
-  
-  /* ALERTS */
-  .alert{padding:12px 16px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:16px}
-  .alert-success{background:#2dd4a020;border:1px solid #2dd4a040;color:#2dd4a0}
-  .alert-error{background:#ff5c6c20;border:1px solid #ff5c6c40;color:#ff5c6c}
-  .alert-info{background:#6c63ff20;border:1px solid #6c63ff40;color:#a0a8ff}
-  
-  /* INGRESO MASIVO */
-  .masa-table{width:100%;border-collapse:collapse;font-size:13px}
-  .masa-table th{padding:8px 10px;background:var(--surface2);font-size:11px;color:var(--text2);text-align:left;border:1px solid var(--border)}
-  .masa-table td{padding:4px}
-  .masa-table td input{width:100%;background:var(--surface2);border:1px solid transparent;color:var(--text);padding:6px 8px;font-size:12px;font-family:'DM Sans',sans-serif}
-  .masa-table td input:focus{outline:none;border-color:var(--primary);background:var(--surface3)}
-  .masa-table .btn-del{background:none;border:none;color:var(--danger);cursor:pointer;padding:6px;font-size:14px}
-  
-  /* ETIQUETAS */
-  .label-config{display:grid;grid-template-columns:280px 1fr;gap:20px}
-  .config-panel{background:var(--surface2);border-radius:var(--radius);padding:16px}
-  .config-section{margin-bottom:20px}
-  .config-section-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
-  .radio-option{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:var(--radius-sm);cursor:pointer;border:1px solid var(--border);margin-bottom:8px;transition:.15s}
-  .radio-option:hover{border-color:var(--primary)60}
-  .radio-option.selected{border-color:var(--primary);background:var(--primary)10}
-  .radio-option input[type=radio]{accent-color:var(--primary);margin-top:2px}
-  .toggle-group{display:flex;flex-wrap:wrap;gap:8px}
-  .toggle-btn{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:.15s;font-family:'DM Sans',sans-serif}
-  .toggle-btn.active{background:var(--primary)20;color:var(--primary);border-color:var(--primary)60}
-  .slider-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px}
-  input[type=range]{width:100%;accent-color:var(--primary)}
-  .label-search{display:flex;gap:8px;margin-bottom:12px}
-  .imei-list{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;min-height:80px;font-size:13px;width:100%;color:var(--text);font-family:'DM Mono',monospace;resize:vertical}
-  .equipo-item-check{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--radius-sm);cursor:pointer;border-bottom:1px solid var(--border)30}
-  .equipo-item-check:hover{background:var(--surface3)}
-  .equipo-item-check input[type=checkbox]{accent-color:var(--primary);width:16px;height:16px}
-  .equipo-nombre{font-size:13px;font-weight:500}
-  .equipo-imei{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace}
-  .label-preview-grid{display:grid;gap:8px}
-  .label-preview{background:white;color:#000;border-radius:4px;padding:10px;font-family:'DM Mono',monospace;font-size:9px;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;text-align:center}
-  .label-preview .lp-model{font-size:11px;font-weight:700;color:#000}
-  .label-preview .lp-brand{font-size:9px;color:#444}
-  .label-preview .lp-imei{font-size:8px;color:#333;font-family:'DM Mono',monospace}
-  .label-preview .lp-barcode{font-size:20px;letter-spacing:2px;margin:4px 0}
-  .label-preview .lp-state{font-size:8px;padding:2px 6px;border-radius:10px;background:#eee;color:#333}
-  
-  /* LOGIN */
-  #login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);position:fixed;inset:0;z-index:9999}
-  #login-page.hidden{display:none}
-  .login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;width:100%;max-width:380px}
-  .login-logo{display:flex;justify-content:center;margin-bottom:8px}
-  .login-title{text-align:center;font-size:22px;font-weight:700;margin-bottom:4px}
-  .login-sub{text-align:center;color:var(--text2);font-size:13px;margin-bottom:24px}
-  .login-error{color:var(--danger);font-size:13px;text-align:center;margin-top:8px}
-  
-  /* MISC */
-  .divider{height:1px;background:var(--border);margin:16px 0}
-  .text-muted{color:var(--text2);font-size:13px}
-  .monospace{font-family:'DM Mono',monospace}
-  .flex{display:flex;align-items:center;gap:8px}
-  .flex-between{display:flex;align-items:center;justify-content:space-between}
-  .mt-16{margin-top:16px}
-  .empty-state{text-align:center;padding:60px 20px;color:var(--text2)}
-  .empty-icon{font-size:48px;margin-bottom:16px}
-  
-  /* PRINT */
-  @media print {
-    body > *:not(#print-area){display:none!important}
-    #print-area{display:block!important;position:fixed;inset:0;background:white;padding:15mm}
-    .label-print-grid{display:flex;flex-wrap:wrap;gap:5mm}
-    .label-print-item{background:white;border:1px solid #ccc;padding:5mm;font-family:monospace;font-size:8pt;text-align:center;break-inside:avoid}
-  }
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f0f11;--surface:#16161a;--surface2:#1e1e24;--surface3:#26262e;
+  --primary:#6c63ff;--secondary:#2dd4a0;--danger:#ff5c6c;--warning:#ffb020;
+  --text:#e8e8f0;--text2:#9090a8;--border:#2a2a35;
+  --r:10px;--rs:6px
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text)}
+
+/* ── LAYOUT ── */
+#login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)}
+#login-page.hidden{display:none!important}
+#app{display:none}
+#app.visible{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.sb-logo{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sb-icon{width:32px;height:32px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sb-title{font-weight:700;font-size:16px}
+.sb-nav{padding:10px;flex:1;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--rs);cursor:pointer;font-size:13px;color:var(--text2);transition:.15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:#6c63ff22;color:var(--primary);font-weight:600}
+.sb-footer{padding:12px;border-top:1px solid var(--border)}
+.sb-user{display:flex;align-items:center;gap:10px;padding:8px;margin-bottom:8px}
+.avatar{width:32px;height:32px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.btn-logout{width:100%;padding:8px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:var(--rs);cursor:pointer;font-size:12px;font-family:inherit;transition:.15s}
+.btn-logout:hover{background:#ff5c6c22;color:var(--danger);border-color:var(--danger)}
+
+/* ── MAIN ── */
+.main{padding:28px;overflow-y:auto;background:var(--bg)}
+.page{display:none}.page.active{display:block}
+.page-header{margin-bottom:24px}
+.page-title{font-size:22px;font-weight:700}
+.page-sub{color:var(--text2);font-size:13px;margin-top:4px}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px}
+.kpi-bar{height:3px;border-radius:2px;margin-bottom:12px}
+.kpi-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.kpi-val{font-size:30px;font-weight:700;margin-top:4px;font-family:'DM Mono',monospace}
+
+/* ── BUTTONS ── */
+.btn{padding:8px 16px;border-radius:var(--rs);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:.15s;display:inline-flex;align-items:center;gap:6px;font-family:inherit}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{opacity:.85}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{background:var(--surface3)}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{opacity:.85}
+.btn-success{background:var(--secondary);color:#000}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn-group{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ── FORMS ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:900px){.form-grid,.form-grid-3{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.form-control{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:var(--rs);font-size:13px;font-family:inherit;transition:.15s;width:100%}
+.form-control:focus{outline:none;border-color:var(--primary)}
+.form-control::placeholder{color:var(--text2)}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+td{padding:11px 14px;font-size:13px;border-bottom:1px solid #ffffff08}
+tr:hover td{background:#ffffff04}
+
+/* ── BADGES ── */
+.badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block}
+.badge-disponible{background:#2dd4a018;color:#2dd4a0}
+.badge-asignado{background:#6c63ff18;color:#8b83ff}
+.badge-mantencion{background:#ffb02018;color:#ffb020}
+.badge-baja{background:#ff5c6c18;color:#ff5c6c}
+.badge-ingreso{background:#2dd4a018;color:#2dd4a0}
+.badge-devolucion{background:#ffb02018;color:#ffb020}
+
+/* ── SEARCH ── */
+.search-row{display:flex;gap:10px;margin-bottom:16px;align-items:center}
+.search-wrap{position:relative;flex:1}
+.search-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px 9px 36px;border-radius:var(--rs);font-size:13px;font-family:inherit}
+.search-input:focus{outline:none;border-color:var(--primary)}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:14px;pointer-events:none}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:var(--rs);margin-bottom:20px;width:fit-content}
+.tab{padding:7px 16px;border-radius:5px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);transition:.15s;border:none;background:none;font-family:inherit}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px #0005}
+
+/* ── ALERTS ── */
+.alert{padding:11px 15px;border-radius:var(--rs);font-size:13px;margin-bottom:14px}
+.alert-success{background:#2dd4a018;border:1px solid #2dd4a040;color:#2dd4a0}
+.alert-error{background:#ff5c6c18;border:1px solid #ff5c6c40;color:#ff5c6c}
+.alert-info{background:#6c63ff18;border:1px solid #6c63ff40;color:#a0a8ff}
+
+/* ── MODAL ── */
+.modal{display:none;position:fixed;inset:0;background:#00000088;z-index:1000;align-items:center;justify-content:center;padding:20px}
+.modal.open{display:flex}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-size:16px;font-weight:600}
+.modal-close{background:none;border:none;color:var(--text2);cursor:pointer;font-size:18px;line-height:1}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+
+/* ── TOGGLE CHIPS ── */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:.15s;font-family:inherit}
+.chip.active{background:#6c63ff22;color:var(--primary);border-color:#6c63ff55}
+
+/* ── INGRESO MASIVO ── */
+.masa-table{width:100%;border-collapse:collapse;font-size:12px}
+.masa-table th{padding:8px 10px;background:var(--surface2);font-size:11px;color:var(--text2);text-align:left;border:1px solid var(--border)}
+.masa-table td{padding:3px}
+.masa-table td input{width:100%;background:var(--surface2);border:1px solid transparent;color:var(--text);padding:7px 8px;font-size:12px;font-family:'DM Mono',monospace}
+.masa-table td input:focus{outline:none;border-color:var(--primary)}
+.btn-del{background:none;border:none;color:var(--danger);cursor:pointer;padding:6px;font-size:14px}
+
+/* ── ETIQUETAS ── */
+.etq-layout{display:grid;grid-template-columns:260px 1fr;gap:20px}
+@media(max-width:900px){.etq-layout{grid-template-columns:1fr}}
+.config-block{margin-bottom:18px}
+.config-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.radio-card{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:var(--rs);cursor:pointer;border:1px solid var(--border);margin-bottom:8px;transition:.15s}
+.radio-card:hover{border-color:#6c63ff55}
+.radio-card.selected{border-color:var(--primary);background:#6c63ff12}
+.slider-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:5px}
+input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
+.equipo-row{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;border-bottom:1px solid #ffffff06;transition:.15s}
+.equipo-row:hover{background:var(--surface2)}
+.lbl-preview{background:white;color:#000;border-radius:4px;padding:8px;font-size:9px;text-align:center;display:flex;flex-direction:column;gap:3px;align-items:center}
+
+/* ── LOGIN ── */
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:32px;width:380px;max-width:95vw}
+.login-logo{display:flex;justify-content:center;margin-bottom:12px}
+.login-title{text-align:center;font-size:22px;font-weight:700;margin-bottom:4px}
+.login-sub{text-align:center;color:var(--text2);font-size:13px;margin-bottom:24px}
+.login-error{color:var(--danger);font-size:13px;text-align:center;margin-top:8px;min-height:20px}
+
+/* ── MISC ── */
+.flex{display:flex;align-items:center;gap:8px}
+.flex-between{display:flex;align-items:center;justify-content:space-between}
+.mt-16{margin-top:16px}
+.monospace{font-family:'DM Mono',monospace}
+.empty{text-align:center;padding:48px 20px;color:var(--text2)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.divider{height:1px;background:var(--border);margin:16px 0}
 </style>
 </head>
 <body>
@@ -188,466 +169,346 @@
     <div class="login-title">InvTech</div>
     <div class="login-sub">Sistema de inventario de equipos</div>
     <div class="form-group" style="margin-bottom:12px">
-      <label>EMAIL</label>
+      <label>Email</label>
       <input class="form-control" id="login-email" type="email" placeholder="admin@empresa.cl" value="admin@empresa.cl">
     </div>
     <div class="form-group" style="margin-bottom:20px">
-      <label>CONTRASEÑA</label>
+      <label>Contraseña</label>
       <input class="form-control" id="login-password" type="password" placeholder="••••••••" value="password">
     </div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()">
-      Iniciar sesión
-    </button>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()">Iniciar sesión</button>
     <div class="login-error" id="login-error"></div>
-    <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--text2)">InvTech v2.0</div>
   </div>
 </div>
 
 <!-- APP -->
-<div id="app" style="display:none;position:relative;min-height:100vh">
-
-<!-- SIDEBAR -->
-<div class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon">📱</div>
-    <div class="logo-text">InvTech</div>
-  </div>
-  <nav class="sidebar-nav">
-    <a class="nav-item active" onclick="showPage('dashboard')">📊 Dashboard</a>
-    <a class="nav-item" onclick="showPage('equipos')">📱 Equipos</a>
-    <a class="nav-item" onclick="showPage('ingresar')">➕ Ingresar equipos</a>
-    <a class="nav-item" onclick="showPage('scanner')">🔍 Escanear</a>
-    <a class="nav-item" onclick="showPage('auditoria')">📋 Auditoría</a>
-    <a class="nav-item" onclick="showPage('etiquetas')">🏷️ Etiquetas</a>
-    <a class="nav-item admin-only" onclick="showPage('admin')" style="display:none">⚙️ Admin</a>
-  </nav>
-  <div class="sidebar-user">
-    <div class="user-info">
-      <div class="avatar" id="sidebar-avatar">A</div>
-      <div>
-        <div class="user-name" id="sidebar-name">Admin</div>
-        <div class="user-rol" id="sidebar-rol">admin</div>
-      </div>
+<div id="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-icon">📱</div>
+      <div class="sb-title">InvTech</div>
     </div>
-    <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
-  </div>
-</div>
-
-<div class="main">
-
-<!-- DASHBOARD -->
-<div class="page active" id="page-dashboard">
-  <div class="page-header">
-    <div class="page-title">Dashboard</div>
-    <div class="page-sub" id="dash-sub">Cargando...</div>
-  </div>
-  <div class="kpi-grid" id="kpi-grid">
-    <div class="kpi-card"><div class="kpi-bar" style="background:var(--primary)"></div><div class="kpi-label">Total</div><div class="kpi-value" id="kpi-total">-</div></div>
-    <div class="kpi-card"><div class="kpi-bar" style="background:var(--secondary)"></div><div class="kpi-label">Asignados</div><div class="kpi-value" id="kpi-asignados">-</div></div>
-    <div class="kpi-card"><div class="kpi-bar" style="background:#6c63ff80"></div><div class="kpi-label">Disponibles</div><div class="kpi-value" id="kpi-disponibles">-</div></div>
-    <div class="kpi-card"><div class="kpi-bar" style="background:var(--warning)"></div><div class="kpi-label">Mantención</div><div class="kpi-value" id="kpi-mantencion">-</div></div>
-  </div>
-  <div class="card">
-    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:14px">EQUIPOS POR ÁREA</div>
-    <div id="area-list"></div>
-  </div>
-</div>
-
-<!-- EQUIPOS -->
-<div class="page" id="page-equipos">
-  <div class="page-header flex-between">
-    <div>
-      <div class="page-title">Equipos</div>
-      <div class="page-sub" id="equipos-count">Cargando...</div>
-    </div>
-  </div>
-  <div class="search-bar">
-    <div class="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input class="search-input" id="eq-search" placeholder="Buscar por IMEI, serie, modelo..." oninput="buscarEquipos()">
-    </div>
-    <select class="form-control" style="width:160px" id="eq-estado" onchange="buscarEquipos()">
-      <option value="">Todos los estados</option>
-      <option value="disponible">Disponible</option>
-      <option value="asignado">Asignado</option>
-      <option value="mantencion">Mantención</option>
-      <option value="baja">Baja</option>
-    </select>
-  </div>
-  <div class="card">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>IMEI 1</th>
-            <th>IMEI 2</th>
-            <th>SERIE</th>
-            <th>MODELO / MARCA</th>
-            <th>ESTADO</th>
-            <th>ÁREA</th>
-            <th>ACCIONES</th>
-          </tr>
-        </thead>
-        <tbody id="equipos-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- INGRESAR EQUIPOS -->
-<div class="page" id="page-ingresar">
-  <div class="page-header">
-    <div class="page-title">Ingresar equipos</div>
-    <div class="page-sub">Elige la forma de ingreso</div>
-  </div>
-  
-  <div class="tabs">
-    <button class="tab active" onclick="switchIngTab('manual',this)">📱 Individual</button>
-    <button class="tab" onclick="switchIngTab('masivo',this)">📋 Masivo</button>
-    <button class="tab" onclick="switchIngTab('excel',this)">📊 Desde Excel</button>
-  </div>
-  
-  <!-- TAB MANUAL -->
-  <div id="ing-manual">
-    <div class="card">
-      <div style="font-size:14px;font-weight:600;margin-bottom:16px">Nuevo equipo</div>
-      <div class="form-grid-3" style="margin-bottom:14px">
-        <div class="form-group">
-          <label>IMEI 1 *</label>
-          <input class="form-control monospace" id="m-imei1" placeholder="350000000000001">
-        </div>
-        <div class="form-group">
-          <label>IMEI 2</label>
-          <input class="form-control monospace" id="m-imei2" placeholder="350000000000002">
-        </div>
-        <div class="form-group">
-          <label>NÚMERO DE SERIE</label>
-          <input class="form-control monospace" id="m-serie" placeholder="SN-0001">
+    <nav class="sb-nav">
+      <button class="nav-item active" onclick="showPage('dashboard',this)">📊 Dashboard</button>
+      <button class="nav-item" onclick="showPage('equipos',this)">📱 Equipos</button>
+      <button class="nav-item" onclick="showPage('ingresar',this)">➕ Ingresar equipos</button>
+      <button class="nav-item" onclick="showPage('scanner',this)">🔍 Escanear</button>
+      <button class="nav-item" onclick="showPage('auditoria',this)">📋 Auditoría</button>
+      <button class="nav-item" onclick="showPage('etiquetas',this)">🏷️ Etiquetas</button>
+      <button class="nav-item admin-only" onclick="showPage('admin',this)" style="display:none">⚙️ Admin</button>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="avatar" id="sidebar-avatar">A</div>
+        <div>
+          <div style="font-size:13px;font-weight:500" id="sidebar-name">Admin</div>
+          <div style="font-size:11px;color:var(--text2)" id="sidebar-rol">admin</div>
         </div>
       </div>
-      <div class="form-grid" style="margin-bottom:14px">
-        <div class="form-group">
-          <label>MODELO *</label>
-          <input class="form-control" id="m-modelo" placeholder="Samsung Galaxy S23">
-        </div>
-        <div class="form-group">
-          <label>MARCA</label>
-          <input class="form-control" id="m-marca" placeholder="Samsung">
-        </div>
-      </div>
-      <div class="form-group" style="margin-bottom:20px">
-        <label>NOTAS</label>
-        <input class="form-control" id="m-notas" placeholder="Estado inicial, accesorios...">
-      </div>
-      <div id="manual-alert"></div>
-      <button class="btn btn-primary" onclick="crearEquipoManual()">➕ Crear equipo</button>
+      <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
     </div>
   </div>
-  
-  <!-- TAB MASIVO -->
-  <div id="ing-masivo" style="display:none">
-    <div class="card">
-      <div class="flex-between" style="margin-bottom:16px">
-        <div style="font-size:14px;font-weight:600">Ingreso masivo</div>
-        <div class="btn-group">
-          <button class="btn btn-secondary btn-sm" onclick="addFilaMasivo()">+ Agregar fila</button>
-          <button class="btn btn-secondary btn-sm" onclick="addFilasMasivo(10)">+ 10 filas</button>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table class="masa-table">
-          <thead>
-            <tr>
-              <th>IMEI 1 *</th>
-              <th>IMEI 2</th>
-              <th>SERIE</th>
-              <th>MODELO *</th>
-              <th>MARCA</th>
-              <th>NOTAS</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="masivo-tbody"></tbody>
-        </table>
-      </div>
-      <div id="masivo-alert" class="mt-16"></div>
-      <div class="mt-16">
-        <button class="btn btn-primary" onclick="enviarMasivo()">💾 Guardar todos</button>
-        <span class="text-muted" style="margin-left:12px" id="masivo-count">0 filas</span>
-      </div>
-    </div>
-  </div>
-  
-  <!-- TAB EXCEL -->
-  <div id="ing-excel" style="display:none">
-    <div class="card">
-      <div style="font-size:14px;font-weight:600;margin-bottom:4px">Importar desde Excel</div>
-      <div class="text-muted" style="margin-bottom:20px">Descarga la plantilla, rellénala y súbela aquí</div>
-      
-      <div class="alert alert-info" style="margin-bottom:16px">
-        📋 El archivo debe tener estas columnas: <strong>imei1, imei2, numero_serie, modelo, marca, notas</strong>
-      </div>
-      
-      <div class="btn-group" style="margin-bottom:20px">
-        <button class="btn btn-secondary" onclick="descargarPlantilla()">⬇️ Descargar plantilla Excel</button>
-      </div>
-      
-      <div class="form-group" style="margin-bottom:20px">
-        <label>SELECCIONAR ARCHIVO EXCEL (.xlsx)</label>
-        <input type="file" id="excel-file" accept=".xlsx,.xls" class="form-control" onchange="previewExcel()">
-      </div>
-      
-      <div id="excel-preview" style="display:none;margin-bottom:16px">
-        <div class="alert alert-success" id="excel-preview-msg"></div>
-        <div class="table-wrap" id="excel-preview-table"></div>
-      </div>
-      
-      <div id="excel-alert"></div>
-      <button class="btn btn-primary" id="excel-upload-btn" style="display:none" onclick="subirExcel()">📊 Importar equipos</button>
-    </div>
-  </div>
-</div>
 
-<!-- SCANNER -->
-<div class="page" id="page-scanner">
-  <div class="page-header">
-    <div class="page-title">Escanear equipo</div>
-    <div class="page-sub">Busca por IMEI 1, IMEI 2 o número de serie</div>
-  </div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="form-group">
-      <label>IMEI / NÚMERO DE SERIE</label>
-      <div class="flex">
-        <input class="form-control monospace" id="scan-input" placeholder="Escanea o escribe el IMEI..." 
-          style="flex:1" onkeydown="if(event.key==='Enter')buscarEquipoScanner()" autofocus>
-        <button class="btn btn-primary" onclick="buscarEquipoScanner()">🔍 Buscar</button>
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub" id="dash-sub">Cargando...</div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-bar" style="background:var(--primary)"></div><div class="kpi-label">Total</div><div class="kpi-val" id="kpi-total">-</div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:var(--secondary)"></div><div class="kpi-label">Asignados</div><div class="kpi-val" id="kpi-asignados">-</div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:#8b83ff"></div><div class="kpi-label">Disponibles</div><div class="kpi-val" id="kpi-disponibles">-</div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:var(--warning)"></div><div class="kpi-label">Mantención</div><div class="kpi-val" id="kpi-mantencion">-</div></div>
+      </div>
+      <div class="card">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Equipos por área</div>
+        <div id="area-list"></div>
       </div>
     </div>
-  </div>
-  <div id="scan-result"></div>
-</div>
 
-<!-- AUDITORÍA -->
-<div class="page" id="page-auditoria">
-  <div class="page-header">
-    <div class="page-title">Auditoría</div>
-    <div class="page-sub">Historial de movimientos</div>
-  </div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="form-grid" style="gap:10px">
-      <div class="form-group">
-        <label>BUSCAR</label>
-        <input class="form-control monospace" id="aud-search" placeholder="IMEI, serie, modelo..." oninput="cargarAuditoria()">
+    <!-- EQUIPOS -->
+    <div class="page" id="page-equipos">
+      <div class="page-header flex-between">
+        <div><div class="page-title">Equipos</div><div class="page-sub" id="equipos-count"></div></div>
       </div>
-      <div class="form-group">
-        <label>TIPO</label>
-        <select class="form-control" id="aud-tipo" onchange="cargarAuditoria()">
-          <option value="">Todos</option>
-          <option value="ingreso">Ingreso</option>
-          <option value="asignacion">Asignación</option>
-          <option value="devolucion">Devolución</option>
+      <div class="search-row">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" id="eq-search" placeholder="Buscar por IMEI 1, IMEI 2, serie, modelo..." oninput="buscarEquipos()">
+        </div>
+        <select class="form-control" style="width:170px" id="eq-estado" onchange="buscarEquipos()">
+          <option value="">Todos los estados</option>
+          <option value="disponible">Disponible</option>
+          <option value="asignado">Asignado</option>
           <option value="mantencion">Mantención</option>
           <option value="baja">Baja</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>DESDE</label>
-        <input class="form-control" type="date" id="aud-desde" onchange="cargarAuditoria()">
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>IMEI 1</th><th>IMEI 2</th><th>SERIE</th><th>MODELO / MARCA</th>
+              <th>ESTADO</th><th>ÁREA</th><th>ACCIONES</th>
+            </tr></thead>
+            <tbody id="equipos-tbody"></tbody>
+          </table>
+        </div>
       </div>
-      <div class="form-group">
-        <label>HASTA</label>
-        <input class="form-control" type="date" id="aud-hasta" onchange="cargarAuditoria()">
-      </div>
     </div>
-  </div>
-  <div class="card">
-    <div class="flex-between" style="margin-bottom:14px">
-      <div style="font-size:13px;color:var(--text2)" id="aud-count">Cargando...</div>
-      <button class="btn btn-secondary btn-sm" onclick="exportarExcel()">📊 Excel</button>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>FECHA</th>
-            <th>TIPO</th>
-            <th>IMEI 1</th>
-            <th>MODELO</th>
-            <th>FUNCIONARIO</th>
-            <th>REGISTRADO POR</th>
-            <th>OBSERVACIÓN</th>
-          </tr>
-        </thead>
-        <tbody id="aud-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
 
-<!-- ETIQUETAS -->
-<div class="page" id="page-etiquetas">
-  <div class="page-header">
-    <div class="page-title">Imprimir etiquetas</div>
-    <div class="page-sub">Busca por IMEI o selecciona múltiples equipos</div>
-  </div>
-  
-  <div class="tabs">
-    <button class="tab active" onclick="switchEtqTab('buscar',this)">🔍 Buscar por IMEI</button>
-    <button class="tab" onclick="switchEtqTab('masivo',this)">📋 Lista de IMEIs</button>
-    <button class="tab" onclick="switchEtqTab('todos',this)">📱 Todos los equipos</button>
-  </div>
-  
-  <div class="label-config">
-    <!-- Panel config -->
-    <div class="config-panel">
-      <div class="config-section">
-        <div class="config-section-title">Formato</div>
-        <label class="radio-option selected" id="fmt-a4">
-          <input type="radio" name="formato" value="a4" checked onchange="renderLabels()">
-          <div><div style="font-size:13px;font-weight:500">Hoja A4 / Carta</div><div style="font-size:11px;color:var(--text2)">4 etiquetas por hoja</div></div>
-        </label>
-        <label class="radio-option" id="fmt-etq">
-          <input type="radio" name="formato" value="etiqueta" onchange="renderLabels()">
-          <div><div style="font-size:13px;font-weight:500">Etiquetadora</div><div style="font-size:11px;color:var(--text2)">Zebra / Brother</div></div>
-        </label>
+    <!-- INGRESAR -->
+    <div class="page" id="page-ingresar">
+      <div class="page-header"><div class="page-title">Ingresar equipos</div><div class="page-sub">Elige la forma de ingreso</div></div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchIngTab('manual',this)">📱 Individual</button>
+        <button class="tab" onclick="switchIngTab('masivo',this)">📋 Masivo</button>
+        <button class="tab" onclick="switchIngTab('excel',this)">📊 Excel</button>
       </div>
-      
-      <div class="config-section">
-        <div class="config-section-title">Contenido</div>
-        <div class="toggle-group">
-          <button class="toggle-btn active" id="tog-barcode" onclick="toggleContent('barcode',this)">Código barras</button>
-          <button class="toggle-btn active" id="tog-qr" onclick="toggleContent('qr',this)">QR</button>
-          <button class="toggle-btn active" id="tog-modelo" onclick="toggleContent('modelo',this)">Modelo</button>
-          <button class="toggle-btn active" id="tog-imei" onclick="toggleContent('imei',this)">IMEI</button>
-          <button class="toggle-btn" id="tog-area" onclick="toggleContent('area',this)">Área</button>
-        </div>
-      </div>
-      
-      <div class="config-section">
-        <div class="config-section-title">Tamaño (A4)</div>
-        <div>
-          <div class="slider-label"><span>Ancho</span><span id="lbl-ancho">90mm</span></div>
-          <input type="range" min="60" max="180" value="90" id="sl-ancho" oninput="document.getElementById('lbl-ancho').textContent=this.value+'mm';renderLabels()">
-        </div>
-        <div style="margin-top:10px">
-          <div class="slider-label"><span>Alto</span><span id="lbl-alto">60mm</span></div>
-          <input type="range" min="40" max="120" value="60" id="sl-alto" oninput="document.getElementById('lbl-alto').textContent=this.value+'mm';renderLabels()">
-        </div>
-      </div>
-    </div>
-    
-    <!-- Panel equipos + preview -->
-    <div>
-      <!-- TAB BUSCAR -->
-      <div id="etq-buscar">
-        <div class="card" style="margin-bottom:16px">
-          <div style="font-size:13px;font-weight:600;margin-bottom:10px">Buscar equipo</div>
-          <div class="label-search">
-            <input class="form-control monospace" id="etq-imei-input" placeholder="Ingresa IMEI 1, IMEI 2 o número de serie..." style="flex:1">
-            <button class="btn btn-primary" onclick="buscarEtiqueta()">🔍 Buscar</button>
+      <!-- Manual -->
+      <div id="ing-manual">
+        <div class="card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:16px">Nuevo equipo</div>
+          <div class="form-grid-3" style="margin-bottom:14px">
+            <div class="form-group"><label>IMEI 1 *</label><input class="form-control monospace" id="m-imei1" placeholder="350000000000001"></div>
+            <div class="form-group"><label>IMEI 2</label><input class="form-control monospace" id="m-imei2" placeholder="350000000000002"></div>
+            <div class="form-group"><label>Número de serie</label><input class="form-control monospace" id="m-serie" placeholder="Ej: R3CN801ABCD"></div>
           </div>
-          <div id="etq-buscar-result"></div>
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="form-group"><label>Modelo *</label><input class="form-control" id="m-modelo" placeholder="Samsung Galaxy S23"></div>
+            <div class="form-group"><label>Marca</label><input class="form-control" id="m-marca" placeholder="Samsung"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:20px"><label>Notas</label><input class="form-control" id="m-notas" placeholder="Estado inicial, accesorios..."></div>
+          <div id="manual-alert"></div>
+          <button class="btn btn-primary" onclick="crearEquipoManual()">➕ Crear equipo</button>
         </div>
       </div>
-      
-      <!-- TAB MASIVO -->
-      <div id="etq-masivo" style="display:none">
-        <div class="card" style="margin-bottom:16px">
-          <div style="font-size:13px;font-weight:600;margin-bottom:6px">Lista de IMEIs</div>
-          <div class="text-muted" style="margin-bottom:10px">Pega o escribe los IMEIs (uno por línea)</div>
-          <textarea class="imei-list" id="etq-imei-lista" rows="6" placeholder="350000000000001&#10;350000000000002&#10;350000000000003"></textarea>
-          <button class="btn btn-primary" style="margin-top:10px" onclick="buscarEtiquetasMasivo()">🔍 Buscar equipos</button>
-        </div>
-      </div>
-      
-      <!-- TAB TODOS -->
-      <div id="etq-todos" style="display:none">
-        <div class="card" style="margin-bottom:16px">
-          <div class="flex-between" style="margin-bottom:10px">
-            <div style="font-size:13px;font-weight:600">Seleccionar equipos</div>
+      <!-- Masivo -->
+      <div id="ing-masivo" style="display:none">
+        <div class="card">
+          <div class="flex-between" style="margin-bottom:16px">
+            <div style="font-size:14px;font-weight:600">Ingreso masivo</div>
             <div class="btn-group">
-              <button class="btn btn-secondary btn-sm" onclick="selTodos(true)">Todos</button>
-              <button class="btn btn-secondary btn-sm" onclick="selTodos(false)">Ninguno</button>
+              <button class="btn btn-secondary btn-sm" onclick="addFilaMasivo()">+ Fila</button>
+              <button class="btn btn-secondary btn-sm" onclick="addFilasMasivo(10)">+ 10 filas</button>
             </div>
           </div>
-          <div id="etq-todos-list" style="max-height:300px;overflow-y:auto"></div>
+          <div class="table-wrap">
+            <table class="masa-table">
+              <thead><tr><th>IMEI 1 *</th><th>IMEI 2</th><th>SERIE</th><th>MODELO *</th><th>MARCA</th><th>NOTAS</th><th></th></tr></thead>
+              <tbody id="masivo-tbody"></tbody>
+            </table>
+          </div>
+          <div id="masivo-alert" class="mt-16"></div>
+          <div class="mt-16 flex">
+            <button class="btn btn-primary" onclick="enviarMasivo()">💾 Guardar todos</button>
+            <span style="color:var(--text2);font-size:13px" id="masivo-count">0 filas</span>
+          </div>
         </div>
       </div>
-      
-      <!-- PREVIEW + PRINT -->
+      <!-- Excel -->
+      <div id="ing-excel" style="display:none">
+        <div class="card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">Importar desde Excel</div>
+          <div style="color:var(--text2);font-size:13px;margin-bottom:16px">Descarga la plantilla, rellénala y súbela aquí</div>
+          <div class="alert alert-info">Columnas requeridas: <strong>imei1, imei2, numero_serie, modelo, marca, notas</strong></div>
+          <div class="btn-group" style="margin:16px 0">
+            <button class="btn btn-secondary" onclick="descargarPlantilla()">⬇️ Descargar plantilla</button>
+          </div>
+          <div class="form-group" style="margin-bottom:16px">
+            <label>Archivo Excel (.xlsx)</label>
+            <input type="file" id="excel-file" accept=".xlsx,.xls" class="form-control" onchange="previewExcel()">
+          </div>
+          <div id="excel-alert"></div>
+          <button class="btn btn-primary" id="excel-upload-btn" style="display:none" onclick="subirExcel()">📊 Importar equipos</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCANNER -->
+    <div class="page" id="page-scanner">
+      <div class="page-header"><div class="page-title">Escanear equipo</div><div class="page-sub">Busca por IMEI 1, IMEI 2 o número de serie</div></div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="form-group">
+          <label>IMEI / Número de serie</label>
+          <div class="flex">
+            <input class="form-control monospace" id="scan-input" placeholder="Escanea o escribe el IMEI..." style="flex:1" onkeydown="if(event.key==='Enter')buscarEquipoScanner()">
+            <button class="btn btn-primary" onclick="buscarEquipoScanner()">🔍 Buscar</button>
+          </div>
+        </div>
+      </div>
+      <div id="scan-result"></div>
+    </div>
+
+    <!-- AUDITORÍA -->
+    <div class="page" id="page-auditoria">
+      <div class="page-header"><div class="page-title">Auditoría</div><div class="page-sub">Historial de movimientos</div></div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="form-grid" style="gap:12px">
+          <div class="form-group"><label>Buscar</label><input class="form-control monospace" id="aud-search" placeholder="IMEI, serie, modelo..." oninput="cargarAuditoria()"></div>
+          <div class="form-group"><label>Tipo</label>
+            <select class="form-control" id="aud-tipo" onchange="cargarAuditoria()">
+              <option value="">Todos</option>
+              <option value="ingreso">Ingreso</option>
+              <option value="asignacion">Asignación</option>
+              <option value="devolucion">Devolución</option>
+              <option value="mantencion">Mantención</option>
+              <option value="baja">Baja</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Desde</label><input class="form-control" type="date" id="aud-desde" onchange="cargarAuditoria()"></div>
+          <div class="form-group"><label>Hasta</label><input class="form-control" type="date" id="aud-hasta" onchange="cargarAuditoria()"></div>
+        </div>
+      </div>
       <div class="card">
-        <div class="flex-between" style="margin-bottom:16px">
-          <div style="font-size:13px;font-weight:600">Vista previa (<span id="etq-count">0</span> etiquetas)</div>
-          <button class="btn btn-primary" onclick="imprimirEtiquetas()">🖨️ Imprimir etiquetas</button>
+        <div class="flex-between" style="margin-bottom:14px">
+          <div style="font-size:13px;color:var(--text2)" id="aud-count">Cargando...</div>
+          <button class="btn btn-secondary btn-sm" onclick="exportarExcel()">📊 Excel</button>
         </div>
-        <div id="etq-preview" class="label-preview-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">
-          <div class="empty-state"><div class="empty-icon">🏷️</div><div>Selecciona equipos para ver la vista previa</div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>FECHA</th><th>TIPO</th><th>IMEI 1</th><th>MODELO</th><th>FUNCIONARIO</th><th>REGISTRADO POR</th><th>OBSERVACIÓN</th></tr></thead>
+            <tbody id="aud-tbody"></tbody>
+          </table>
         </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- ADMIN -->
-<div class="page" id="page-admin">
-  <div class="page-header flex-between">
-    <div>
-      <div class="page-title">Administración</div>
-      <div class="page-sub">Gestión de usuarios del sistema</div>
+    <!-- ETIQUETAS -->
+    <div class="page" id="page-etiquetas">
+      <div class="page-header"><div class="page-title">Imprimir etiquetas</div><div class="page-sub">Busca por IMEI o selecciona múltiples equipos</div></div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchEtqTab('buscar',this)">🔍 Buscar por IMEI</button>
+        <button class="tab" onclick="switchEtqTab('masivo',this)">📋 Lista de IMEIs</button>
+        <button class="tab" onclick="switchEtqTab('todos',this)">📱 Todos</button>
+      </div>
+      <div class="etq-layout">
+        <!-- Config -->
+        <div>
+          <div class="card">
+            <div class="config-block">
+              <div class="config-label">Formato</div>
+              <label class="radio-card selected" id="fmt-a4">
+                <input type="radio" name="formato" value="a4" checked onchange="renderLabels()">
+                <div><div style="font-size:13px;font-weight:500">Hoja A4 / Carta</div><div style="font-size:11px;color:var(--text2)">4 etiquetas por hoja</div></div>
+              </label>
+              <label class="radio-card" id="fmt-etq">
+                <input type="radio" name="formato" value="etiqueta" onchange="renderLabels()">
+                <div><div style="font-size:13px;font-weight:500">Etiquetadora</div><div style="font-size:11px;color:var(--text2)">Zebra / Brother</div></div>
+              </label>
+            </div>
+            <div class="config-block">
+              <div class="config-label">Contenido</div>
+              <div class="chips">
+                <button class="chip active" id="tog-barcode" onclick="toggleContent('barcode',this)">Código barras</button>
+                <button class="chip active" id="tog-qr" onclick="toggleContent('qr',this)">QR</button>
+                <button class="chip active" id="tog-modelo" onclick="toggleContent('modelo',this)">Modelo</button>
+                <button class="chip active" id="tog-imei" onclick="toggleContent('imei',this)">IMEI</button>
+                <button class="chip" id="tog-area" onclick="toggleContent('area',this)">Área</button>
+              </div>
+            </div>
+            <div class="config-block">
+              <div class="config-label">Tamaño (A4)</div>
+              <div class="slider-row"><span>Ancho</span><span id="lbl-ancho">90mm</span></div>
+              <input type="range" min="60" max="180" value="90" id="sl-ancho" oninput="document.getElementById('lbl-ancho').textContent=this.value+'mm';renderLabels()">
+              <div class="slider-row"><span>Alto</span><span id="lbl-alto">60mm</span></div>
+              <input type="range" min="40" max="120" value="60" id="sl-alto" oninput="document.getElementById('lbl-alto').textContent=this.value+'mm';renderLabels()">
+            </div>
+          </div>
+        </div>
+        <!-- Panel derecho -->
+        <div>
+          <!-- Buscar -->
+          <div id="etq-buscar">
+            <div class="card" style="margin-bottom:16px">
+              <div style="font-size:13px;font-weight:600;margin-bottom:10px">Buscar equipo</div>
+              <div class="flex">
+                <input class="form-control monospace" id="etq-imei-input" placeholder="IMEI 1, IMEI 2 o número de serie..." style="flex:1">
+                <button class="btn btn-primary" onclick="buscarEtiqueta()">🔍 Buscar</button>
+              </div>
+              <div id="etq-buscar-result"></div>
+            </div>
+          </div>
+          <!-- Lista masiva -->
+          <div id="etq-masivo" style="display:none">
+            <div class="card" style="margin-bottom:16px">
+              <div style="font-size:13px;font-weight:600;margin-bottom:6px">Lista de IMEIs</div>
+              <div style="color:var(--text2);font-size:12px;margin-bottom:10px">Un IMEI por línea</div>
+              <textarea class="form-control monospace" id="etq-imei-lista" rows="6" placeholder="350000000000001&#10;350000000000002"></textarea>
+              <button class="btn btn-primary" style="margin-top:10px" onclick="buscarEtiquetasMasivo()">🔍 Buscar equipos</button>
+            </div>
+          </div>
+          <!-- Todos -->
+          <div id="etq-todos" style="display:none">
+            <div class="card" style="margin-bottom:16px">
+              <div class="flex-between" style="margin-bottom:10px">
+                <div style="font-size:13px;font-weight:600">Seleccionar equipos</div>
+                <div class="btn-group">
+                  <button class="btn btn-secondary btn-sm" onclick="selTodos(true)">Todos</button>
+                  <button class="btn btn-secondary btn-sm" onclick="selTodos(false)">Ninguno</button>
+                </div>
+              </div>
+              <div id="etq-todos-list" style="max-height:280px;overflow-y:auto"></div>
+            </div>
+          </div>
+          <!-- Preview -->
+          <div class="card">
+            <div class="flex-between" style="margin-bottom:16px">
+              <div style="font-size:13px;font-weight:600">Vista previa (<span id="etq-count">0</span> etiquetas)</div>
+              <button class="btn btn-primary" onclick="imprimirEtiquetas()">🖨️ Imprimir</button>
+            </div>
+            <div id="etq-preview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
+              <div class="empty"><div class="empty-icon">🏷️</div><div>Selecciona equipos</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <button class="btn btn-primary" onclick="abrirModalUsuario()">➕ Nuevo usuario</button>
-  </div>
-  <div class="card">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>NOMBRE</th>
-            <th>EMAIL</th>
-            <th>ROL</th>
-            <th>ESTADO</th>
-            <th>CREADO</th>
-            <th>ACCIONES</th>
-          </tr>
-        </thead>
-        <tbody id="admin-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
 
-</div><!-- /main -->
+    <!-- ADMIN -->
+    <div class="page" id="page-admin">
+      <div class="page-header flex-between">
+        <div><div class="page-title">Administración</div><div class="page-sub">Gestión de usuarios</div></div>
+        <button class="btn btn-primary" onclick="abrirModalUsuario()">➕ Nuevo usuario</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>NOMBRE</th><th>EMAIL</th><th>ROL</th><th>ESTADO</th><th>CREADO</th><th>ACCIONES</th></tr></thead>
+            <tbody id="admin-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
 </div><!-- /app -->
 
 <!-- MODAL MOVIMIENTO -->
 <div class="modal" id="modal-mov">
   <div class="modal-box">
-    <div class="modal-header">
-      <div class="modal-title">Registrar movimiento</div>
-      <button class="modal-close" onclick="closeModal('modal-mov')">✕</button>
-    </div>
+    <div class="modal-header"><div class="modal-title">Registrar movimiento</div><button class="modal-close" onclick="closeModal('modal-mov')">✕</button></div>
     <div id="mov-equipo-info" class="alert alert-info" style="margin-bottom:16px"></div>
     <div class="form-group" style="margin-bottom:16px">
-      <label>TIPO DE MOVIMIENTO</label>
-      <div class="toggle-group" id="mov-tipo-group">
-        <button class="toggle-btn active" onclick="selMovTipo('asignacion',this)">Asignación</button>
-        <button class="toggle-btn" onclick="selMovTipo('devolucion',this)">Devolución</button>
-        <button class="toggle-btn" onclick="selMovTipo('mantencion',this)">Mantención</button>
-        <button class="toggle-btn" onclick="selMovTipo('baja',this)">Baja</button>
+      <label>Tipo de movimiento</label>
+      <div class="chips" id="mov-tipo-group">
+        <button class="chip active" onclick="selMovTipo('asignacion',this)">Asignación</button>
+        <button class="chip" onclick="selMovTipo('devolucion',this)">Devolución</button>
+        <button class="chip" onclick="selMovTipo('mantencion',this)">Mantención</button>
+        <button class="chip" onclick="selMovTipo('baja',this)">Baja</button>
       </div>
     </div>
     <div class="form-group" id="funcionario-group" style="margin-bottom:16px">
-      <label>FUNCIONARIO</label>
-      <select class="form-control" id="mov-funcionario">
-        <option value="">Seleccionar funcionario...</option>
-      </select>
+      <label>Funcionario</label>
+      <select class="form-control" id="mov-funcionario"><option value="">Seleccionar...</option></select>
     </div>
     <div class="form-group" style="margin-bottom:16px">
-      <label>OBSERVACIÓN</label>
+      <label>Observación</label>
       <input class="form-control" id="mov-obs" placeholder="Notas adicionales...">
     </div>
     <div id="mov-alert"></div>
@@ -661,27 +522,14 @@
 <!-- MODAL USUARIO -->
 <div class="modal" id="modal-usuario">
   <div class="modal-box">
-    <div class="modal-header">
-      <div class="modal-title" id="modal-usuario-title">Nuevo usuario</div>
-      <button class="modal-close" onclick="closeModal('modal-usuario')">✕</button>
+    <div class="modal-header"><div class="modal-title" id="modal-usuario-title">Nuevo usuario</div><button class="modal-close" onclick="closeModal('modal-usuario')">✕</button></div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="form-group"><label>Nombre *</label><input class="form-control" id="u-nombre" placeholder="Juan Pérez"></div>
+      <div class="form-group"><label>Email *</label><input class="form-control" id="u-email" type="email" placeholder="juan@empresa.cl"></div>
     </div>
     <div class="form-grid" style="margin-bottom:14px">
-      <div class="form-group">
-        <label>NOMBRE *</label>
-        <input class="form-control" id="u-nombre" placeholder="Juan Pérez">
-      </div>
-      <div class="form-group">
-        <label>EMAIL *</label>
-        <input class="form-control" id="u-email" type="email" placeholder="juan@empresa.cl">
-      </div>
-    </div>
-    <div class="form-grid" style="margin-bottom:14px">
-      <div class="form-group">
-        <label>CONTRASEÑA *</label>
-        <input class="form-control" id="u-password" type="password" placeholder="Mínimo 6 caracteres">
-      </div>
-      <div class="form-group">
-        <label>ROL *</label>
+      <div class="form-group"><label>Contraseña *</label><input class="form-control" id="u-password" type="password" placeholder="Mínimo 6 caracteres"></div>
+      <div class="form-group"><label>Rol *</label>
         <select class="form-control" id="u-rol">
           <option value="operador">Operador</option>
           <option value="auditor">Auditor</option>
@@ -700,37 +548,18 @@
 <!-- MODAL EDITAR EQUIPO -->
 <div class="modal" id="modal-equipo">
   <div class="modal-box">
-    <div class="modal-header">
-      <div class="modal-title">Editar equipo</div>
-      <button class="modal-close" onclick="closeModal('modal-equipo')">✕</button>
-    </div>
+    <div class="modal-header"><div class="modal-title">Editar equipo</div><button class="modal-close" onclick="closeModal('modal-equipo')">✕</button></div>
     <div class="form-grid-3" style="margin-bottom:14px">
-      <div class="form-group">
-        <label>IMEI 1 *</label>
-        <input class="form-control monospace" id="eq-imei1" placeholder="350000000000001">
-      </div>
-      <div class="form-group">
-        <label>IMEI 2</label>
-        <input class="form-control monospace" id="eq-imei2" placeholder="350000000000002">
-      </div>
-      <div class="form-group">
-        <label>NÚMERO DE SERIE</label>
-        <input class="form-control monospace" id="eq-serie" placeholder="SN-0001">
-      </div>
+      <div class="form-group"><label>IMEI 1 *</label><input class="form-control monospace" id="eq-imei1"></div>
+      <div class="form-group"><label>IMEI 2</label><input class="form-control monospace" id="eq-imei2"></div>
+      <div class="form-group"><label>Serie</label><input class="form-control monospace" id="eq-serie"></div>
     </div>
     <div class="form-grid" style="margin-bottom:14px">
-      <div class="form-group">
-        <label>MODELO *</label>
-        <input class="form-control" id="eq-modelo" placeholder="Samsung Galaxy S23">
-      </div>
-      <div class="form-group">
-        <label>MARCA</label>
-        <input class="form-control" id="eq-marca" placeholder="Samsung">
-      </div>
+      <div class="form-group"><label>Modelo *</label><input class="form-control" id="eq-modelo"></div>
+      <div class="form-group"><label>Marca</label><input class="form-control" id="eq-marca"></div>
     </div>
     <div class="form-grid" style="margin-bottom:14px">
-      <div class="form-group">
-        <label>ESTADO</label>
+      <div class="form-group"><label>Estado</label>
         <select class="form-control" id="eq-estado-edit">
           <option value="disponible">Disponible</option>
           <option value="asignado">Asignado</option>
@@ -738,10 +567,7 @@
           <option value="baja">Baja</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>NOTAS</label>
-        <input class="form-control" id="eq-notas" placeholder="Notas...">
-      </div>
+      <div class="form-group"><label>Notas</label><input class="form-control" id="eq-notas"></div>
     </div>
     <div id="equipo-edit-alert"></div>
     <div class="modal-footer">
@@ -750,7 +576,6 @@
     </div>
   </div>
 </div>
-<div id="print-area" style="display:none"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
@@ -761,140 +586,112 @@ let usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
 let currentEquipoId = null;
 let movTipo = 'asignacion';
 let equiposEtiquetas = [];
-let labelContent = {barcode:true, qr:true, modelo:true, imei:true, area:false};
-let etqTab = 'buscar';
+let labelContent = {barcode:true,qr:true,modelo:true,imei:true,area:false};
+let editingUserId = null;
+let editingEquipoId = null;
 
-// === AUTH ===
+// AUTH
 async function doLogin() {
   const email = document.getElementById('login-email').value;
   const password = document.getElementById('login-password').value;
   document.getElementById('login-error').textContent = '';
   try {
-    const r = await fetch(`${API}/api/auth/login`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({email, password})
-    });
+    const r = await fetch(`${API}/api/auth/login`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Error de login');
-    token = data.token;
-    usuario = data.usuario;
+    token = data.token; usuario = data.usuario;
     localStorage.setItem('token', token);
     localStorage.setItem('usuario', JSON.stringify(usuario));
     initApp();
-  } catch(e) {
-    document.getElementById('login-error').textContent = e.message;
-  }
+  } catch(e) { document.getElementById('login-error').textContent = e.message; }
 }
 
 function doLogout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('usuario');
+  localStorage.removeItem('token'); localStorage.removeItem('usuario');
   token = null; usuario = null;
-  document.getElementById('app').style.display = 'none';
+  document.getElementById('app').classList.remove('visible');
   document.getElementById('login-page').classList.remove('hidden');
 }
 
 async function api(path, options={}) {
-  const r = await fetch(`${API}/api${path}`, {
-    ...options,
-    headers: {'Authorization':`Bearer ${token}`, 'Content-Type':'application/json', ...(options.headers||{})}
-  });
+  const r = await fetch(`${API}/api${path}`, {...options, headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json',...(options.headers||{})}});
   if (r.status === 401) { doLogout(); return null; }
   return r;
 }
 
 function initApp() {
   document.getElementById('login-page').classList.add('hidden');
-  document.getElementById('app').style.display='block';
+  document.getElementById('app').classList.add('visible');
   document.getElementById('sidebar-name').textContent = usuario.nombre.split(' ')[0];
   document.getElementById('sidebar-avatar').textContent = usuario.nombre[0].toUpperCase();
   document.getElementById('sidebar-rol').textContent = usuario.rol;
-  if (usuario.rol === 'admin') {
-    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
-  }
+  if (usuario.rol === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
   cargarDashboard();
   cargarFuncionarios();
   addFilasMasivo(3);
   cargarTodosEtiquetas();
 }
 
-// === NAVIGATION ===
-function showPage(name) {
+// NAVIGATION
+function showPage(name, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
-  event.currentTarget.classList.add('active');
-  if (name === 'dashboard') cargarDashboard();
-  if (name === 'equipos') buscarEquipos();
-  if (name === 'auditoria') { cargarAuditoria(); }
-  if (name === 'admin') cargarUsuarios();
-  if (name === 'scanner') setTimeout(()=>document.getElementById('scan-input').focus(),100);
+  if(el) el.classList.add('active');
+  if (name==='dashboard') cargarDashboard();
+  if (name==='equipos') buscarEquipos();
+  if (name==='auditoria') cargarAuditoria();
+  if (name==='admin') cargarUsuarios();
+  if (name==='scanner') setTimeout(()=>document.getElementById('scan-input').focus(),100);
 }
 
-// === DASHBOARD ===
+// DASHBOARD
 async function cargarDashboard() {
-  const r = await api('/equipos/stats/resumen');
-  if (!r) return;
+  const r = await api('/equipos/stats/resumen'); if (!r) return;
   const data = await r.json();
   document.getElementById('kpi-total').textContent = data.kpis.total;
   document.getElementById('kpi-asignados').textContent = data.kpis.asignados;
   document.getElementById('kpi-disponibles').textContent = data.kpis.disponibles;
   document.getElementById('kpi-mantencion').textContent = data.kpis.mantencion;
   document.getElementById('dash-sub').textContent = `Total: ${data.kpis.total} equipos registrados`;
-  const areaList = document.getElementById('area-list');
-  areaList.innerHTML = data.por_area.map(a => `
+  document.getElementById('area-list').innerHTML = data.por_area.map(a => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface2);border-radius:6px;margin-bottom:6px">
       <span style="font-size:13px">${a.area}</span>
       <span style="font-weight:600;color:var(--primary)">${a.cantidad}</span>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-// === EQUIPOS ===
-let searchTimeout;
+// EQUIPOS
+let st;
 function buscarEquipos() {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(async () => {
+  clearTimeout(st);
+  st = setTimeout(async () => {
     const q = document.getElementById('eq-search').value;
     const estado = document.getElementById('eq-estado').value;
-    const params = new URLSearchParams();
-    if (q) params.append('q', q);
-    if (estado) params.append('estado', estado);
-    const r = await api(`/equipos?${params}`);
-    if (!r) return;
+    const p = new URLSearchParams();
+    if (q) p.append('q', q);
+    if (estado) p.append('estado', estado);
+    const r = await api(`/equipos?${p}`); if (!r) return;
     const equipos = await r.json();
     document.getElementById('equipos-count').textContent = `${equipos.length} equipos encontrados`;
     const tbody = document.getElementById('equipos-tbody');
-    if (equipos.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:32px">No se encontraron equipos</td></tr>';
-      return;
-    }
-    tbody.innerHTML = equipos.map(e => `
-      <tr>
-        <td class="monospace" style="font-size:12px">${e.imei1}</td>
-        <td class="monospace" style="font-size:12px;color:var(--text2)">${e.imei2||'-'}</td>
-        <td class="monospace" style="font-size:12px;color:var(--text2)">${e.numero_serie||'-'}</td>
-        <td>
-          <div style="font-size:13px;font-weight:500">${e.modelo}</div>
-          <div style="font-size:11px;color:var(--text2)">${e.marca||''}</div>
-        </td>
-        <td><span class="badge badge-${e.estado}">${e.estado}</span></td>
-        <td style="color:var(--text2);font-size:12px">${e.area||'-'}</td>
-        <td>
-          <div class="btn-group">
-            <button class="btn btn-secondary btn-sm" onclick="abrirMovimiento(${e.id},'${e.imei1}','${e.modelo}')">📋 Mov.</button>
-            ${usuario.rol === 'admin' ? `
-              <button class="btn btn-secondary btn-sm" onclick="abrirEditarEquipo(${e.id},'${e.imei1}','${e.imei2||''}','${e.numero_serie||''}','${e.modelo}','${e.marca||''}','${e.estado}','${e.notas||''}')">✏️</button>
-              <button class="btn btn-danger btn-sm" onclick="eliminarEquipo(${e.id},'${e.imei1}')">🗑️</button>
-            ` : ''}
-          </div>
-        </td>
-      </tr>
-    `).join('');
+    if (!equipos.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:32px">No se encontraron equipos</td></tr>'; return; }
+    tbody.innerHTML = equipos.map(e => `<tr>
+      <td class="monospace" style="font-size:12px">${e.imei1}</td>
+      <td class="monospace" style="font-size:12px;color:var(--text2)">${e.imei2||'-'}</td>
+      <td class="monospace" style="font-size:12px;color:var(--text2)">${e.numero_serie||'-'}</td>
+      <td><div style="font-size:13px;font-weight:500">${e.modelo}</div><div style="font-size:11px;color:var(--text2)">${e.marca||''}</div></td>
+      <td><span class="badge badge-${e.estado}">${e.estado}</span></td>
+      <td style="color:var(--text2);font-size:12px">${e.area||'-'}</td>
+      <td><div class="btn-group">
+        <button class="btn btn-secondary btn-sm" onclick="abrirMovimiento(${e.id},'${e.imei1}','${e.modelo}')">📋 Mov.</button>
+        ${usuario.rol==='admin'?`<button class="btn btn-secondary btn-sm" onclick="abrirEditarEquipo(${e.id},'${e.imei1}','${e.imei2||''}','${e.numero_serie||''}','${e.modelo}','${e.marca||''}','${e.estado}','${e.notas||''}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarEquipo(${e.id},'${e.imei1}')">🗑️</button>`:''}
+      </div></td></tr>`).join('');
   }, 300);
 }
 
-// === INGRESO ===
+// INGRESO
 function switchIngTab(tab, el) {
   ['manual','masivo','excel'].forEach(t => document.getElementById('ing-'+t).style.display = t===tab?'block':'none');
   document.querySelectorAll('#page-ingresar .tab').forEach(t => t.classList.remove('active'));
@@ -904,246 +701,152 @@ function switchIngTab(tab, el) {
 async function crearEquipoManual() {
   const imei1 = document.getElementById('m-imei1').value.trim();
   const modelo = document.getElementById('m-modelo').value.trim();
-  if (!imei1 || !modelo) {
-    showAlert('manual-alert', 'IMEI 1 y Modelo son requeridos', 'error');
-    return;
-  }
-  const body = {
-    imei1, imei2: document.getElementById('m-imei2').value.trim()||null,
-    numero_serie: document.getElementById('m-serie').value.trim()||null,
-    modelo, marca: document.getElementById('m-marca').value.trim()||null,
-    notas: document.getElementById('m-notas').value.trim()||null
-  };
-  const r = await api('/equipos', {method:'POST', body:JSON.stringify(body)});
-  if (!r) return;
+  if (!imei1||!modelo) { showAlert('manual-alert','IMEI 1 y Modelo son requeridos','error'); return; }
+  const body = {imei1, imei2:document.getElementById('m-imei2').value.trim()||null, numero_serie:document.getElementById('m-serie').value.trim()||null, modelo, marca:document.getElementById('m-marca').value.trim()||null, notas:document.getElementById('m-notas').value.trim()||null};
+  const r = await api('/equipos',{method:'POST',body:JSON.stringify(body)}); if (!r) return;
   const data = await r.json();
-  if (!r.ok) { showAlert('manual-alert', data.error, 'error'); return; }
-  showAlert('manual-alert', `✅ Equipo ${imei1} creado correctamente. Se registró ingreso en auditoría.`, 'success');
+  if (!r.ok) { showAlert('manual-alert',data.error,'error'); return; }
+  showAlert('manual-alert',`✅ Equipo ${imei1} creado correctamente`,'success');
   ['m-imei1','m-imei2','m-serie','m-modelo','m-marca','m-notas'].forEach(id => document.getElementById(id).value='');
 }
 
 function addFilaMasivo() {
-  const tbody = document.getElementById('masivo-tbody');
   const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td><input type="text" class="monospace" placeholder="350000000000001"></td>
-    <td><input type="text" class="monospace" placeholder="350000000000002"></td>
-    <td><input type="text" class="monospace" placeholder="SN-001"></td>
-    <td><input type="text" placeholder="Samsung Galaxy S23"></td>
-    <td><input type="text" placeholder="Samsung"></td>
-    <td><input type="text" placeholder="Notas..."></td>
-    <td><button class="btn-del" onclick="this.closest('tr').remove();updateMasivoCount()">🗑</button></td>
-  `;
-  tbody.appendChild(tr);
+  tr.innerHTML = `<td><input type="text" placeholder="350000000000001"></td><td><input type="text" placeholder="350000000000002"></td><td><input type="text" placeholder="SN-001"></td><td><input type="text" placeholder="Samsung Galaxy S23"></td><td><input type="text" placeholder="Samsung"></td><td><input type="text" placeholder="Notas..."></td><td><button class="btn-del" onclick="this.closest('tr').remove();updateMasivoCount()">🗑</button></td>`;
+  document.getElementById('masivo-tbody').appendChild(tr);
   updateMasivoCount();
 }
-
 function addFilasMasivo(n) { for(let i=0;i<n;i++) addFilaMasivo(); }
-
-function updateMasivoCount() {
-  const n = document.querySelectorAll('#masivo-tbody tr').length;
-  document.getElementById('masivo-count').textContent = `${n} fila${n!==1?'s':''}`;
-}
+function updateMasivoCount() { const n=document.querySelectorAll('#masivo-tbody tr').length; document.getElementById('masivo-count').textContent=`${n} fila${n!==1?'s':''}`; }
 
 async function enviarMasivo() {
-  const filas = document.querySelectorAll('#masivo-tbody tr');
   const equipos = [];
-  filas.forEach(tr => {
-    const inputs = tr.querySelectorAll('input');
-    const imei1 = inputs[0].value.trim();
-    const modelo = inputs[3].value.trim();
-    if (imei1 && modelo) {
-      equipos.push({
-        imei1, imei2: inputs[1].value.trim()||null,
-        numero_serie: inputs[2].value.trim()||null,
-        modelo, marca: inputs[4].value.trim()||null,
-        notas: inputs[5].value.trim()||null
-      });
-    }
+  document.querySelectorAll('#masivo-tbody tr').forEach(tr => {
+    const inp = tr.querySelectorAll('input');
+    const imei1 = inp[0].value.trim(); const modelo = inp[3].value.trim();
+    if (imei1&&modelo) equipos.push({imei1, imei2:inp[1].value.trim()||null, numero_serie:inp[2].value.trim()||null, modelo, marca:inp[4].value.trim()||null, notas:inp[5].value.trim()||null});
   });
-  if (equipos.length === 0) { showAlert('masivo-alert','No hay equipos para guardar','error'); return; }
-  const r = await api('/equipos/masivo', {method:'POST', body:JSON.stringify({equipos})});
-  if (!r) return;
+  if (!equipos.length) { showAlert('masivo-alert','No hay equipos para guardar','error'); return; }
+  const r = await api('/equipos/masivo',{method:'POST',body:JSON.stringify({equipos})}); if (!r) return;
   const data = await r.json();
-  if (!r.ok) { showAlert('masivo-alert', data.error, 'error'); return; }
-  const {exitosos, errores, total} = data.resultados;
-  let msg = `✅ ${exitosos} de ${total} equipos ingresados correctamente.`;
-  if (errores.length > 0) msg += ` ⚠️ ${errores.length} errores: ${errores.slice(0,3).join(', ')}`;
-  showAlert('masivo-alert', msg, exitosos > 0 ? 'success' : 'error');
-  if (exitosos > 0) { document.getElementById('masivo-tbody').innerHTML=''; addFilasMasivo(3); }
+  if (!r.ok) { showAlert('masivo-alert',data.error,'error'); return; }
+  const {exitosos,errores,total} = data.resultados;
+  showAlert('masivo-alert',`✅ ${exitosos} de ${total} equipos ingresados.${errores.length?` ⚠️ ${errores.length} errores.`:''}`, exitosos>0?'success':'error');
+  if (exitosos>0) { document.getElementById('masivo-tbody').innerHTML=''; addFilasMasivo(3); }
 }
 
 async function descargarPlantilla() {
-  const r = await fetch(`${API}/api/equipos/plantilla`, {headers:{'Authorization':`Bearer ${token}`}});
+  const r = await fetch(`${API}/api/equipos/plantilla`,{headers:{'Authorization':`Bearer ${token}`}});
   const blob = await r.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'plantilla_equipos.xlsx'; a.click();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'plantilla_equipos.xlsx'; a.click();
 }
 
 async function previewExcel() {
-  const file = document.getElementById('excel-file').files[0];
-  if (!file) return;
-  document.getElementById('excel-preview-msg').textContent = `📄 Archivo: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
-  document.getElementById('excel-preview').style.display = 'block';
+  const file = document.getElementById('excel-file').files[0]; if (!file) return;
   document.getElementById('excel-upload-btn').style.display = 'inline-flex';
+  showAlert('excel-alert',`📄 ${file.name} (${(file.size/1024).toFixed(1)} KB) listo para importar`,'info');
 }
 
 async function subirExcel() {
-  const file = document.getElementById('excel-file').files[0];
-  if (!file) return;
-  const formData = new FormData();
-  formData.append('archivo', file);
-  showAlert('excel-alert', '⏳ Importando...', 'info');
-  const r = await fetch(`${API}/api/equipos/importar`, {
-    method:'POST', headers:{'Authorization':`Bearer ${token}`}, body:formData
-  });
+  const file = document.getElementById('excel-file').files[0]; if (!file) return;
+  const fd = new FormData(); fd.append('archivo', file);
+  showAlert('excel-alert','⏳ Importando...','info');
+  const r = await fetch(`${API}/api/equipos/importar`,{method:'POST',headers:{'Authorization':`Bearer ${token}`},body:fd});
   const data = await r.json();
-  if (!r.ok) { showAlert('excel-alert', data.error, 'error'); return; }
-  const {exitosos, errores, total} = data.resultados;
-  let msg = `✅ ${exitosos} de ${total} equipos importados correctamente.`;
-  if (errores.length > 0) msg += ` ⚠️ ${errores.length} errores.`;
-  showAlert('excel-alert', msg, exitosos > 0 ? 'success' : 'error');
+  if (!r.ok) { showAlert('excel-alert',data.error,'error'); return; }
+  const {exitosos,errores,total} = data.resultados;
+  showAlert('excel-alert',`✅ ${exitosos} de ${total} equipos importados.${errores.length?` ⚠️ ${errores.length} errores.`:''}`, exitosos>0?'success':'error');
 }
 
-// === SCANNER ===
+// SCANNER
 async function buscarEquipoScanner() {
-  const q = document.getElementById('scan-input').value.trim();
-  if (!q) return;
+  const q = document.getElementById('scan-input').value.trim(); if (!q) return;
   const r = await api(`/equipos/buscar?q=${encodeURIComponent(q)}`);
   const div = document.getElementById('scan-result');
-  if (!r || !r.ok) {
-    div.innerHTML = `<div class="alert alert-error">❌ Equipo no encontrado: ${q}</div>`;
-    return;
-  }
+  if (!r||!r.ok) { div.innerHTML=`<div class="alert alert-error">❌ Equipo no encontrado: ${q}</div>`; return; }
   const e = await r.json();
-  div.innerHTML = `
-    <div class="card">
-      <div class="flex-between" style="margin-bottom:16px">
-        <div>
-          <div style="font-size:16px;font-weight:600">${e.modelo}</div>
-          <div style="color:var(--text2);font-size:13px">${e.marca||''}</div>
-        </div>
-        <span class="badge badge-${e.estado}">${e.estado}</span>
-      </div>
-      <div class="form-grid-3" style="gap:12px;margin-bottom:16px">
-        <div><div style="font-size:11px;color:var(--text2)">IMEI 1</div><div class="monospace" style="font-size:13px">${e.imei1}</div></div>
-        <div><div style="font-size:11px;color:var(--text2)">IMEI 2</div><div class="monospace" style="font-size:13px">${e.imei2||'-'}</div></div>
-        <div><div style="font-size:11px;color:var(--text2)">SERIE</div><div class="monospace" style="font-size:13px">${e.numero_serie||'-'}</div></div>
-      </div>
-      <div class="btn-group">
-        <button class="btn btn-primary" onclick="abrirMovimiento(${e.id},'${e.imei1}','${e.modelo}')">📋 Registrar movimiento</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('scan-input').value='';document.getElementById('scan-result').innerHTML=''">Limpiar</button>
-      </div>
+  div.innerHTML = `<div class="card"><div class="flex-between" style="margin-bottom:14px"><div><div style="font-size:16px;font-weight:600">${e.modelo}</div><div style="color:var(--text2);font-size:13px">${e.marca||''}</div></div><span class="badge badge-${e.estado}">${e.estado}</span></div>
+    <div class="form-grid-3" style="gap:12px;margin-bottom:16px">
+      <div><div style="font-size:11px;color:var(--text2)">IMEI 1</div><div class="monospace" style="font-size:13px">${e.imei1}</div></div>
+      <div><div style="font-size:11px;color:var(--text2)">IMEI 2</div><div class="monospace" style="font-size:13px">${e.imei2||'-'}</div></div>
+      <div><div style="font-size:11px;color:var(--text2)">SERIE</div><div class="monospace" style="font-size:13px">${e.numero_serie||'-'}</div></div>
     </div>
-  `;
-  document.getElementById('scan-input').value = '';
-  document.getElementById('scan-input').focus();
+    <div class="btn-group"><button class="btn btn-primary" onclick="abrirMovimiento(${e.id},'${e.imei1}','${e.modelo}')">📋 Registrar movimiento</button><button class="btn btn-secondary" onclick="document.getElementById('scan-input').value='';document.getElementById('scan-result').innerHTML=''">Limpiar</button></div></div>`;
+  document.getElementById('scan-input').value='';
 }
 
-// === MOVIMIENTO ===
+// FUNCIONARIOS
 async function cargarFuncionarios() {
-  const r = await api('/funcionarios');
-  if (!r) return;
+  const r = await api('/funcionarios'); if (!r) return;
   const data = await r.json();
   const sel = document.getElementById('mov-funcionario');
-  data.forEach(f => {
-    const opt = document.createElement('option');
-    opt.value = f.id;
-    opt.textContent = `${f.nombre}${f.area?' — '+f.area:''}`;
-    sel.appendChild(opt);
-  });
+  data.forEach(f => { const o=document.createElement('option'); o.value=f.id; o.textContent=`${f.nombre}${f.area?' — '+f.area:''}`; sel.appendChild(o); });
 }
 
+// MOVIMIENTO
 function abrirMovimiento(id, imei1, modelo) {
-  currentEquipoId = id;
-  movTipo = 'asignacion';
+  currentEquipoId = id; movTipo = 'asignacion';
   document.getElementById('mov-equipo-info').textContent = `${modelo} — IMEI: ${imei1}`;
   document.getElementById('mov-obs').value = '';
   document.getElementById('mov-alert').innerHTML = '';
-  document.querySelectorAll('#mov-tipo-group .toggle-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.querySelectorAll('#mov-tipo-group .chip').forEach((b,i) => b.classList.toggle('active',i===0));
   document.getElementById('funcionario-group').style.display = 'block';
   document.getElementById('modal-mov').classList.add('open');
 }
 
 function selMovTipo(tipo, el) {
   movTipo = tipo;
-  document.querySelectorAll('#mov-tipo-group .toggle-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#mov-tipo-group .chip').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('funcionario-group').style.display = tipo === 'asignacion' ? 'block' : 'none';
+  document.getElementById('funcionario-group').style.display = tipo==='asignacion'?'block':'none';
 }
 
 async function guardarMovimiento() {
   const funcionarioId = document.getElementById('mov-funcionario').value;
   const observacion = document.getElementById('mov-obs').value;
-  if (movTipo === 'asignacion' && !funcionarioId) {
-    showAlert('mov-alert', 'Selecciona un funcionario', 'error'); return;
-  }
-  const r = await api('/asignaciones', {
-    method:'POST',
-    body: JSON.stringify({equipo_id: currentEquipoId, funcionario_id: funcionarioId||null, tipo: movTipo, observacion})
-  });
+  if (movTipo==='asignacion'&&!funcionarioId) { showAlert('mov-alert','Selecciona un funcionario','error'); return; }
+  const r = await api('/asignaciones',{method:'POST',body:JSON.stringify({equipo_id:currentEquipoId, funcionario_id:funcionarioId||null, tipo:movTipo, observacion})});
   if (!r) return;
   const data = await r.json();
-  if (!r.ok) { showAlert('mov-alert', data.error, 'error'); return; }
-  closeModal('modal-mov');
-  buscarEquipos();
+  if (!r.ok) { showAlert('mov-alert',data.error,'error'); return; }
+  closeModal('modal-mov'); buscarEquipos();
 }
 
-// === AUDITORÍA ===
+// AUDITORÍA
 async function cargarAuditoria() {
-  const search = document.getElementById('aud-search').value;
-  const tipo = document.getElementById('aud-tipo').value;
-  const desde = document.getElementById('aud-desde').value;
-  const hasta = document.getElementById('aud-hasta').value;
-  const params = new URLSearchParams();
-  if (search) params.append('q', search);
-  if (tipo) params.append('tipo', tipo);
-  if (desde) params.append('desde', desde);
-  if (hasta) params.append('hasta', hasta);
-  const r = await api(`/asignaciones?${params}`);
-  if (!r) return;
+  const q=document.getElementById('aud-search').value, tipo=document.getElementById('aud-tipo').value,
+        desde=document.getElementById('aud-desde').value, hasta=document.getElementById('aud-hasta').value;
+  const p=new URLSearchParams();
+  if(q) p.append('q',q); if(tipo) p.append('tipo',tipo); if(desde) p.append('desde',desde); if(hasta) p.append('hasta',hasta);
+  const r = await api(`/asignaciones?${p}`); if (!r) return;
   const movs = await r.json();
   document.getElementById('aud-count').textContent = `${movs.length} movimientos`;
   const tbody = document.getElementById('aud-tbody');
-  if (movs.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:32px">Sin resultados</td></tr>';
-    return;
-  }
-  tbody.innerHTML = movs.map(m => `
-    <tr>
-      <td style="font-size:12px;white-space:nowrap">${new Date(m.fecha).toLocaleString('es-CL')}</td>
-      <td><span class="badge badge-${m.tipo}">${m.tipo}</span></td>
-      <td class="monospace" style="font-size:12px">${m.imei1||m.numero_serie||'-'}</td>
-      <td style="font-size:13px">${m.modelo||'-'}</td>
-      <td style="font-size:13px;color:var(--text2)">${m.funcionario||'-'}</td>
-      <td style="font-size:12px;color:var(--text2)">${m.registrado_por||'-'}</td>
-      <td style="font-size:12px;color:var(--text2)">${m.observacion||'-'}</td>
-    </tr>
-  `).join('');
+  if (!movs.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:32px">Sin resultados</td></tr>'; return; }
+  tbody.innerHTML = movs.map(m => `<tr>
+    <td style="font-size:12px;white-space:nowrap">${new Date(m.fecha).toLocaleString('es-CL')}</td>
+    <td><span class="badge badge-${m.tipo}">${m.tipo}</span></td>
+    <td class="monospace" style="font-size:12px">${m.imei1||'-'}</td>
+    <td style="font-size:13px">${m.modelo||'-'}</td>
+    <td style="font-size:13px;color:var(--text2)">${m.funcionario||'-'}</td>
+    <td style="font-size:12px;color:var(--text2)">${m.registrado_por||'-'}</td>
+    <td style="font-size:12px;color:var(--text2)">${m.observacion||'-'}</td></tr>`).join('');
 }
 
-async function exportarExcel() {
-  window.open(`${API}/api/asignaciones/export/excel?token=${token}`, '_blank');
-}
+async function exportarExcel() { window.open(`${API}/api/asignaciones/export/excel?token=${token}`,'_blank'); }
 
-// === ETIQUETAS ===
+// ETIQUETAS
 function switchEtqTab(tab, el) {
-  etqTab = tab;
   ['buscar','masivo','todos'].forEach(t => document.getElementById('etq-'+t).style.display = t===tab?'block':'none');
   document.querySelectorAll('#page-etiquetas .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
 }
 
 async function buscarEtiqueta() {
-  const q = document.getElementById('etq-imei-input').value.trim();
-  if (!q) return;
+  const q = document.getElementById('etq-imei-input').value.trim(); if (!q) return;
   const r = await api(`/equipos/buscar?q=${encodeURIComponent(q)}`);
   const div = document.getElementById('etq-buscar-result');
-  if (!r || !r.ok) {
-    div.innerHTML = `<div class="alert alert-error" style="margin-top:10px">❌ Equipo no encontrado</div>`;
-    return;
-  }
+  if (!r||!r.ok) { div.innerHTML=`<div class="alert alert-error" style="margin-top:10px">❌ Equipo no encontrado</div>`; return; }
   const e = await r.json();
   equiposEtiquetas = [e];
   div.innerHTML = `<div class="alert alert-success" style="margin-top:10px">✅ ${e.modelo} — IMEI: ${e.imei1}</div>`;
@@ -1151,277 +854,163 @@ async function buscarEtiqueta() {
 }
 
 async function buscarEtiquetasMasivo() {
-  const lista = document.getElementById('etq-imei-lista').value;
-  const imeis = lista.split('\n').map(s=>s.trim()).filter(s=>s);
-  if (imeis.length === 0) return;
+  const imeis = document.getElementById('etq-imei-lista').value.split('\n').map(s=>s.trim()).filter(s=>s);
   equiposEtiquetas = [];
-  for (const imei of imeis) {
-    const r = await api(`/equipos/buscar?q=${encodeURIComponent(imei)}`);
-    if (r && r.ok) {
-      const e = await r.json();
-      equiposEtiquetas.push(e);
-    }
-  }
+  for (const imei of imeis) { const r=await api(`/equipos/buscar?q=${encodeURIComponent(imei)}`); if(r&&r.ok) equiposEtiquetas.push(await r.json()); }
   renderLabels();
 }
 
 async function cargarTodosEtiquetas() {
-  const r = await api('/equipos');
-  if (!r) return;
+  const r = await api('/equipos'); if (!r) return;
   const equipos = await r.json();
-  const div = document.getElementById('etq-todos-list');
-  div.innerHTML = equipos.map(e => `
-    <div class="equipo-item-check" onclick="toggleEquipoEtq(${e.id},this)">
-      <input type="checkbox" data-id="${e.id}" data-equipo='${JSON.stringify(e).replace(/'/g,"&#39;")}'>
-      <div>
-        <div class="equipo-nombre">${e.modelo}</div>
-        <div class="equipo-imei">IMEI: ${e.imei1}</div>
-      </div>
-      <span class="badge badge-${e.estado}" style="margin-left:auto">${e.estado}</span>
-    </div>
-  `).join('');
+  document.getElementById('etq-todos-list').innerHTML = equipos.map(e => `
+    <div class="equipo-row" onclick="toggleEquipoEtq(${e.id},this)">
+      <input type="checkbox" data-id="${e.id}" data-equipo='${JSON.stringify(e).replace(/'/g,"&#39;")}' style="accent-color:var(--primary);width:16px;height:16px">
+      <div style="flex:1"><div style="font-size:13px;font-weight:500">${e.modelo}</div><div style="font-size:11px;color:var(--text2);font-family:'DM Mono',monospace">${e.imei1}</div></div>
+      <span class="badge badge-${e.estado}">${e.estado}</span>
+    </div>`).join('');
 }
 
 function toggleEquipoEtq(id, row) {
-  const cb = row.querySelector('input[type=checkbox]');
-  cb.checked = !cb.checked;
-  const equipo = JSON.parse(cb.dataset.equipo);
-  if (cb.checked) {
-    equiposEtiquetas.push(equipo);
-  } else {
-    equiposEtiquetas = equiposEtiquetas.filter(e => e.id !== id);
-  }
+  const cb = row.querySelector('input[type=checkbox]'); cb.checked = !cb.checked;
+  const e = JSON.parse(cb.dataset.equipo);
+  if (cb.checked) { if (!equiposEtiquetas.find(x=>x.id===id)) equiposEtiquetas.push(e); }
+  else { equiposEtiquetas = equiposEtiquetas.filter(x=>x.id!==id); }
   renderLabels();
 }
 
 function selTodos(checked) {
-  document.querySelectorAll('#etq-todos-list input[type=checkbox]').forEach(cb => {
-    cb.checked = checked;
-    const equipo = JSON.parse(cb.dataset.equipo);
-    if (checked) {
-      if (!equiposEtiquetas.find(e => e.id === equipo.id)) equiposEtiquetas.push(equipo);
-    }
-  });
-  if (!checked) equiposEtiquetas = [];
+  document.querySelectorAll('#etq-todos-list input[type=checkbox]').forEach(cb => { cb.checked=checked; const e=JSON.parse(cb.dataset.equipo); if(checked&&!equiposEtiquetas.find(x=>x.id===e.id)) equiposEtiquetas.push(e); });
+  if (!checked) equiposEtiquetas=[];
   renderLabels();
 }
 
-function toggleContent(key, el) {
-  labelContent[key] = !labelContent[key];
-  el.classList.toggle('active', labelContent[key]);
-  renderLabels();
-}
+function toggleContent(key, el) { labelContent[key]=!labelContent[key]; el.classList.toggle('active',labelContent[key]); renderLabels(); }
 
 function renderLabels() {
   const preview = document.getElementById('etq-preview');
   document.getElementById('etq-count').textContent = equiposEtiquetas.length;
-  if (equiposEtiquetas.length === 0) {
-    preview.innerHTML = '<div class="empty-state"><div class="empty-icon">🏷️</div><div>Selecciona equipos para ver la vista previa</div></div>';
-    return;
-  }
-  const ancho = document.getElementById('sl-ancho').value;
-  const alto = document.getElementById('sl-alto').value;
+  if (!equiposEtiquetas.length) { preview.innerHTML='<div class="empty"><div class="empty-icon">🏷️</div><div>Selecciona equipos para ver la vista previa</div></div>'; return; }
+  const w=document.getElementById('sl-ancho').value, h=document.getElementById('sl-alto').value;
   preview.innerHTML = equiposEtiquetas.map(e => `
-    <div class="label-preview" style="width:${ancho*0.8}px;min-height:${alto*0.8}px">
-      ${labelContent.modelo ? `<div class="lp-model">${e.modelo}</div>` : ''}
-      ${labelContent.modelo && e.marca ? `<div class="lp-brand">${e.marca}</div>` : ''}
-      ${labelContent.barcode ? `<div class="lp-barcode">|||||||||||</div>` : ''}
-      ${labelContent.imei ? `<div class="lp-imei">IMEI: ${e.imei1}</div>` : ''}
-      ${e.imei2 && labelContent.imei ? `<div class="lp-imei">IMEI2: ${e.imei2}</div>` : ''}
-      ${labelContent.area && e.area ? `<div class="lp-state">${e.area}</div>` : ''}
-      <div class="lp-state">${e.estado}</div>
-    </div>
-  `).join('');
+    <div class="lbl-preview" style="width:${w*0.7}px;min-height:${h*0.7}px">
+      ${labelContent.modelo?`<div style="font-size:10px;font-weight:700">${e.modelo}</div>`:''}
+      ${labelContent.modelo&&e.marca?`<div style="font-size:8px;color:#555">${e.marca}</div>`:''}
+      ${labelContent.barcode?`<div style="font-size:22px;letter-spacing:2px">|||||||||||</div>`:''}
+      ${labelContent.imei?`<div style="font-size:8px">IMEI: ${e.imei1}</div>`:''}
+      ${e.imei2&&labelContent.imei?`<div style="font-size:8px">IMEI2: ${e.imei2}</div>`:''}
+    </div>`).join('');
 }
 
 function imprimirEtiquetas() {
-  if (equiposEtiquetas.length === 0) { alert('Selecciona al menos un equipo'); return; }
-  const ancho = document.getElementById('sl-ancho').value;
-  const alto = document.getElementById('sl-alto').value;
-  const html = `
-    <html><head><style>
-      @page{margin:10mm}
-      body{margin:0;font-family:monospace}
-      .grid{display:flex;flex-wrap:wrap;gap:5mm}
-      .label{width:${ancho}mm;min-height:${alto}mm;border:1px solid #ccc;padding:4mm;text-align:center;break-inside:avoid;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2mm}
-      .lm{font-size:11pt;font-weight:700}
-      .lb{font-size:7pt;color:#555}
-      .li{font-size:7pt}
-    </style></head><body>
-    <div class="grid">
-      ${equiposEtiquetas.map(e => `
-        <div class="label">
-          ${labelContent.modelo ? `<div class="lm">${e.modelo}</div>` : ''}
-          ${labelContent.modelo && e.marca ? `<div class="lb">${e.marca}</div>` : ''}
-          ${labelContent.barcode ? `<div style="font-size:28pt;letter-spacing:3px">|||||||||||</div>` : ''}
-          ${labelContent.imei ? `<div class="li">IMEI 1: ${e.imei1}</div>` : ''}
-          ${e.imei2 && labelContent.imei ? `<div class="li">IMEI 2: ${e.imei2}</div>` : ''}
-          ${e.numero_serie ? `<div class="li">Serie: ${e.numero_serie}</div>` : ''}
-          ${labelContent.area && e.area ? `<div class="li">${e.area}</div>` : ''}
-        </div>
-      `).join('')}
-    </div>
-    </body></html>
-  `;
-  const w = window.open('','_blank');
-  w.document.write(html);
-  w.document.close();
-  w.print();
+  if (!equiposEtiquetas.length) { alert('Selecciona al menos un equipo'); return; }
+  const w=document.getElementById('sl-ancho').value, h=document.getElementById('sl-alto').value;
+  const html = `<html><head><style>@page{margin:10mm}body{margin:0;font-family:monospace}.grid{display:flex;flex-wrap:wrap;gap:5mm}.label{width:${w}mm;min-height:${h}mm;border:1px solid #ccc;padding:4mm;text-align:center;break-inside:avoid;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2mm}</style></head><body><div class="grid">${equiposEtiquetas.map(e=>`<div class="label">${labelContent.modelo?`<div style="font-size:11pt;font-weight:700">${e.modelo}</div>`:''}<div style="font-size:24pt;letter-spacing:3px">|||||||||||</div>${labelContent.imei?`<div style="font-size:7pt">IMEI 1: ${e.imei1}</div>`:''}</div>`).join('')}</div></body></html>`;
+  const w2=window.open('','_blank'); w2.document.write(html); w2.document.close(); w2.print();
 }
 
-// === UTILS ===
-function showAlert(id, msg, type) {
-  document.getElementById(id).innerHTML = `<div class="alert alert-${type}" style="margin-top:8px">${msg}</div>`;
-  setTimeout(()=>{ const el=document.getElementById(id); if(el) el.innerHTML=''; }, 6000);
-}
-
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
-
-// === ADMIN - USUARIOS ===
-let editingUserId = null;
-
+// ADMIN - USUARIOS
 async function cargarUsuarios() {
-  const r = await api('/usuarios');
-  if (!r) return;
+  const r = await api('/usuarios'); if (!r) return;
   const usuarios = await r.json();
-  const tbody = document.getElementById('admin-tbody');
-  tbody.innerHTML = usuarios.map(u => `
-    <tr>
-      <td style="font-size:13px;font-weight:500">${u.nombre}</td>
-      <td style="font-size:13px;color:var(--text2)">${u.email}</td>
-      <td>
-        <span class="badge" style="background:${u.rol==='admin'?'var(--primary)20':u.rol==='auditor'?'var(--warning)20':'var(--secondary)20'};color:${u.rol==='admin'?'var(--primary)':u.rol==='auditor'?'var(--warning)':'var(--secondary)'}">
-          ${u.rol}
-        </span>
-      </td>
-      <td><span class="badge ${u.activo?'badge-disponible':'badge-baja'}">${u.activo?'Activo':'Inactivo'}</span></td>
-      <td style="font-size:12px;color:var(--text2)">${new Date(u.created_at).toLocaleDateString('es-CL')}</td>
-      <td>
-        <div class="btn-group">
-          <button class="btn btn-secondary btn-sm" onclick="editarUsuario(${u.id},'${u.nombre}','${u.email}','${u.rol}')">✏️ Editar</button>
-          ${u.activo && u.id !== usuario.id ? `<button class="btn btn-danger btn-sm" onclick="desactivarUsuario(${u.id})">🚫 Desactivar</button>` : ''}
-        </div>
-      </td>
-    </tr>
-  `).join('');
+  document.getElementById('admin-tbody').innerHTML = usuarios.map(u => `<tr>
+    <td style="font-size:13px;font-weight:500">${u.nombre}</td>
+    <td style="font-size:13px;color:var(--text2)">${u.email}</td>
+    <td><span class="badge" style="background:${u.rol==='admin'?'#6c63ff22':u.rol==='auditor'?'#ffb02022':'#2dd4a022'};color:${u.rol==='admin'?'var(--primary)':u.rol==='auditor'?'var(--warning)':'var(--secondary)'}">${u.rol}</span></td>
+    <td><span class="badge ${u.activo?'badge-disponible':'badge-baja'}">${u.activo?'Activo':'Inactivo'}</span></td>
+    <td style="font-size:12px;color:var(--text2)">${new Date(u.created_at).toLocaleDateString('es-CL')}</td>
+    <td><div class="btn-group">
+      <button class="btn btn-secondary btn-sm" onclick="editarUsuario(${u.id},'${u.nombre}','${u.email}','${u.rol}')">✏️ Editar</button>
+      ${u.activo&&u.id!==usuario.id?`<button class="btn btn-danger btn-sm" onclick="desactivarUsuario(${u.id})">🚫</button>`:''}
+    </div></td></tr>`).join('');
 }
 
 function abrirModalUsuario() {
-  editingUserId = null;
-  document.getElementById('modal-usuario-title').textContent = 'Nuevo usuario';
-  ['u-nombre','u-email','u-password'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('u-rol').value = 'operador';
-  document.getElementById('usuario-alert').innerHTML = '';
+  editingUserId=null;
+  document.getElementById('modal-usuario-title').textContent='Nuevo usuario';
+  ['u-nombre','u-email','u-password'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('u-rol').value='operador';
+  document.getElementById('usuario-alert').innerHTML='';
   document.getElementById('modal-usuario').classList.add('open');
 }
 
-function editarUsuario(id, nombre, email, rol) {
-  editingUserId = id;
-  document.getElementById('modal-usuario-title').textContent = 'Editar usuario';
-  document.getElementById('u-nombre').value = nombre;
-  document.getElementById('u-email').value = email;
-  document.getElementById('u-password').value = '';
-  document.getElementById('u-rol').value = rol;
-  document.getElementById('usuario-alert').innerHTML = '';
+function editarUsuario(id,nombre,email,rol) {
+  editingUserId=id;
+  document.getElementById('modal-usuario-title').textContent='Editar usuario';
+  document.getElementById('u-nombre').value=nombre;
+  document.getElementById('u-email').value=email;
+  document.getElementById('u-password').value='';
+  document.getElementById('u-rol').value=rol;
+  document.getElementById('usuario-alert').innerHTML='';
   document.getElementById('modal-usuario').classList.add('open');
 }
 
 async function guardarUsuario() {
-  const nombre = document.getElementById('u-nombre').value.trim();
-  const email = document.getElementById('u-email').value.trim();
-  const password = document.getElementById('u-password').value;
-  const rol = document.getElementById('u-rol').value;
-
-  if (!nombre || !email || !rol) {
-    showAlert('usuario-alert', 'Nombre, email y rol son requeridos', 'error'); return;
-  }
-
-  if (!editingUserId && !password) {
-    showAlert('usuario-alert', 'La contraseña es requerida para nuevos usuarios', 'error'); return;
-  }
-
+  const nombre=document.getElementById('u-nombre').value.trim(), email=document.getElementById('u-email').value.trim(),
+        password=document.getElementById('u-password').value, rol=document.getElementById('u-rol').value;
+  if (!nombre||!email||!rol) { showAlert('usuario-alert','Nombre, email y rol son requeridos','error'); return; }
+  if (!editingUserId&&!password) { showAlert('usuario-alert','La contraseña es requerida','error'); return; }
   let r;
   if (editingUserId) {
-    const body = { nombre, email, rol };
-    r = await api(`/usuarios/${editingUserId}`, { method: 'PUT', body: JSON.stringify(body) });
-    if (r && r.ok && password) {
-      await api(`/usuarios/${editingUserId}/password`, { method: 'PUT', body: JSON.stringify({ password }) });
-    }
+    r = await api(`/usuarios/${editingUserId}`,{method:'PUT',body:JSON.stringify({nombre,email,rol})});
+    if (r&&r.ok&&password) await api(`/usuarios/${editingUserId}/password`,{method:'PUT',body:JSON.stringify({password})});
   } else {
-    r = await api('/usuarios', { method: 'POST', body: JSON.stringify({ nombre, email, password, rol }) });
+    r = await api('/usuarios',{method:'POST',body:JSON.stringify({nombre,email,password,rol})});
   }
-
   if (!r) return;
   const data = await r.json();
-  if (!r.ok) { showAlert('usuario-alert', data.error, 'error'); return; }
-  closeModal('modal-usuario');
-  cargarUsuarios();
+  if (!r.ok) { showAlert('usuario-alert',data.error,'error'); return; }
+  closeModal('modal-usuario'); cargarUsuarios();
 }
 
 async function desactivarUsuario(id) {
   if (!confirm('¿Desactivar este usuario?')) return;
-  const r = await api(`/usuarios/${id}`, { method: 'DELETE' });
-  if (r && r.ok) cargarUsuarios();
+  const r = await api(`/usuarios/${id}`,{method:'DELETE'});
+  if (r&&r.ok) cargarUsuarios();
 }
 
-// === ADMIN - EDITAR/ELIMINAR EQUIPOS ===
-let editingEquipoId = null;
-
-function abrirEditarEquipo(id, imei1, imei2, serie, modelo, marca, estado, notas) {
-  editingEquipoId = id;
-  document.getElementById('eq-imei1').value = imei1 || '';
-  document.getElementById('eq-imei2').value = imei2 || '';
-  document.getElementById('eq-serie').value = serie || '';
-  document.getElementById('eq-modelo').value = modelo || '';
-  document.getElementById('eq-marca').value = marca || '';
-  document.getElementById('eq-estado-edit').value = estado || 'disponible';
-  document.getElementById('eq-notas').value = notas || '';
-  document.getElementById('equipo-edit-alert').innerHTML = '';
+// ADMIN - EQUIPOS
+function abrirEditarEquipo(id,imei1,imei2,serie,modelo,marca,estado,notas) {
+  editingEquipoId=id;
+  document.getElementById('eq-imei1').value=imei1||'';
+  document.getElementById('eq-imei2').value=imei2||'';
+  document.getElementById('eq-serie').value=serie||'';
+  document.getElementById('eq-modelo').value=modelo||'';
+  document.getElementById('eq-marca').value=marca||'';
+  document.getElementById('eq-estado-edit').value=estado||'disponible';
+  document.getElementById('eq-notas').value=notas||'';
+  document.getElementById('equipo-edit-alert').innerHTML='';
   document.getElementById('modal-equipo').classList.add('open');
 }
 
 async function guardarEquipo() {
-  const imei1 = document.getElementById('eq-imei1').value.trim();
-  const modelo = document.getElementById('eq-modelo').value.trim();
-  if (!imei1 || !modelo) {
-    showAlert('equipo-edit-alert', 'IMEI 1 y modelo son requeridos', 'error'); return;
-  }
-  const body = {
-    imei1, imei2: document.getElementById('eq-imei2').value.trim() || null,
-    numero_serie: document.getElementById('eq-serie').value.trim() || null,
-    modelo, marca: document.getElementById('eq-marca').value.trim() || null,
-    estado: document.getElementById('eq-estado-edit').value,
-    notas: document.getElementById('eq-notas').value.trim() || null
-  };
-  const r = await api(`/equipos/${editingEquipoId}`, { method: 'PUT', body: JSON.stringify(body) });
-  if (!r) return;
+  const imei1=document.getElementById('eq-imei1').value.trim(), modelo=document.getElementById('eq-modelo').value.trim();
+  if (!imei1||!modelo) { showAlert('equipo-edit-alert','IMEI 1 y modelo son requeridos','error'); return; }
+  const body={imei1, imei2:document.getElementById('eq-imei2').value.trim()||null, numero_serie:document.getElementById('eq-serie').value.trim()||null, modelo, marca:document.getElementById('eq-marca').value.trim()||null, estado:document.getElementById('eq-estado-edit').value, notas:document.getElementById('eq-notas').value.trim()||null};
+  const r = await api(`/equipos/${editingEquipoId}`,{method:'PUT',body:JSON.stringify(body)}); if (!r) return;
   const data = await r.json();
-  if (!r.ok) { showAlert('equipo-edit-alert', data.error, 'error'); return; }
-  closeModal('modal-equipo');
-  buscarEquipos();
+  if (!r.ok) { showAlert('equipo-edit-alert',data.error,'error'); return; }
+  closeModal('modal-equipo'); buscarEquipos();
 }
 
-async function eliminarEquipo(id, imei1) {
-  if (!confirm(`¿Eliminar el equipo ${imei1}? Esta acción también eliminará su historial de movimientos.`)) return;
-  const r = await api(`/equipos/${id}`, { method: 'DELETE' });
-  if (!r) return;
+async function eliminarEquipo(id,imei1) {
+  if (!confirm(`¿Eliminar el equipo ${imei1}? Se eliminará también su historial.`)) return;
+  const r = await api(`/equipos/${id}`,{method:'DELETE'}); if (!r) return;
   const data = await r.json();
   if (!r.ok) { alert(data.error); return; }
   buscarEquipos();
 }
 
-// Init
-if (token) {
-  initApp();
-} else {
-  document.getElementById('login-page').classList.remove('hidden');
+// UTILS
+function showAlert(id,msg,type) {
+  document.getElementById(id).innerHTML=`<div class="alert alert-${type}">${msg}</div>`;
+  setTimeout(()=>{ const el=document.getElementById(id); if(el) el.innerHTML=''; },6000);
 }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open'));
-});
+// INIT
+if (token) { initApp(); } else { document.getElementById('login-page').classList.remove('hidden'); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open')); });
 </script>
 </body>
 </html>
