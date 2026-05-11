@@ -1098,7 +1098,28 @@ async function cargarAuditoria() {
     <td style="font-size:12px;color:var(--text2)">${m.observacion||'-'}</td></tr>`).join('');
 }
 
-async function exportarExcel() { window.open(`${API}/api/asignaciones/export/excel?token=${token}`,'_blank'); }
+async function exportarExcel() {
+  const q=document.getElementById('aud-search').value, tipo=document.getElementById('aud-tipo').value,
+        desde=document.getElementById('aud-desde').value, hasta=document.getElementById('aud-hasta').value;
+  const p=new URLSearchParams();
+  if(q) p.append('q',q); if(tipo) p.append('tipo',tipo);
+  if(desde) p.append('desde',desde); if(hasta) p.append('hasta',hasta);
+  try {
+    const r = await fetch(`${API}/api/asignaciones/export/excel?${p}`, {
+      headers: {'Authorization': `Bearer ${token}`}
+    });
+    if (!r.ok) { alert('Error al exportar'); return; }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `auditoria_${new Date().toISOString().slice(0,10)}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('Error al descargar Excel');
+  }
+}
 
 // ETIQUETAS
 function switchEtqTab(tab, el) {
