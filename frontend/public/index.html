@@ -982,7 +982,7 @@ function buscarEquipos() {
       <td style="color:var(--text2);font-size:12px">${e.area||'-'}</td>
       <td><div class="btn-group">
         <button class="btn btn-secondary btn-sm" onclick="abrirMovimiento(${e.id},'${e.imei1}','${e.modelo}')">📋 Mov.</button>
-        ${usuario.rol==='admin'?`<button class="btn btn-secondary btn-sm" onclick="abrirEditarEquipo(${e.id},'${e.imei1}','${e.imei2||''}','${e.numero_serie||''}','${e.modelo}','${e.marca||''}','${e.estado}','${e.notas||''}','${e.ubicacion||''}')">✏️</button>
+        ${usuario.rol==='admin'?`<button class="btn btn-secondary btn-sm" onclick="abrirEditarEquipo(${e.id},'${e.imei1}','${e.imei2||''}','${e.numero_serie||''}','${e.modelo}','${e.marca||''}','${e.estado}','${e.notas||''}','${e.ubicacion||''}',${e.tipo_id||'null'})">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="eliminarEquipo(${e.id},'${e.imei1}')">🗑️</button>`:''}
       </div></td></tr>`).join('');
   }, 300);
@@ -1327,7 +1327,7 @@ async function desactivarUsuario(id) {
 }
 
 // ADMIN - EQUIPOS
-function abrirEditarEquipo(id,imei1,imei2,serie,modelo,marca,estado,notas,ubicacion) {
+function abrirEditarEquipo(id,imei1,imei2,serie,modelo,marca,estado,notas,ubicacion,tipo_id) {
   editingEquipoId=id;
   document.getElementById('eq-imei1').value=imei1||'';
   document.getElementById('eq-imei2').value=imei2||'';
@@ -1337,6 +1337,7 @@ function abrirEditarEquipo(id,imei1,imei2,serie,modelo,marca,estado,notas,ubicac
   document.getElementById('eq-estado-edit').value=estado||'disponible';
   document.getElementById('eq-notas').value=notas||'';
   document.getElementById('eq-ubicacion').value=ubicacion||'';
+  document.getElementById('eq-tipo-edit').value=tipo_id||'';
   document.getElementById('equipo-edit-alert').innerHTML='';
   document.getElementById('modal-equipo').classList.add('open');
 }
@@ -1344,7 +1345,7 @@ function abrirEditarEquipo(id,imei1,imei2,serie,modelo,marca,estado,notas,ubicac
 async function guardarEquipo() {
   const imei1=document.getElementById('eq-imei1').value.trim(), modelo=document.getElementById('eq-modelo').value.trim();
   if (!imei1||!modelo) { showAlert('equipo-edit-alert','IMEI 1 y modelo son requeridos','error'); return; }
-  const body={imei1, imei2:document.getElementById('eq-imei2').value.trim()||null, numero_serie:document.getElementById('eq-serie').value.trim()||null, modelo, marca:document.getElementById('eq-marca').value.trim()||null, estado:document.getElementById('eq-estado-edit').value, notas:document.getElementById('eq-notas').value.trim()||null, ubicacion:document.getElementById('eq-ubicacion').value.trim()||null};
+  const body={imei1, imei2:document.getElementById('eq-imei2').value.trim()||null, numero_serie:document.getElementById('eq-serie').value.trim()||null, modelo, marca:document.getElementById('eq-marca').value.trim()||null, estado:document.getElementById('eq-estado-edit').value, notas:document.getElementById('eq-notas').value.trim()||null, ubicacion:document.getElementById('eq-ubicacion').value.trim()||null, tipo_id:document.getElementById('eq-tipo-edit').value||null};
   const r = await api(`/equipos/${editingEquipoId}`,{method:'PUT',body:JSON.stringify(body)}); if (!r) return;
   const data = await r.json();
   if (!r.ok) { showAlert('equipo-edit-alert',data.error,'error'); return; }
