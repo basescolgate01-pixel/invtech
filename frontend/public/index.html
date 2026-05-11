@@ -14,7 +14,7 @@
     --text:#e8e8f0;--text2:#9898b0;--text3:#5858708;--border:#2a2a32;
     --radius:10px;--radius-sm:6px
   }
-  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;position:relative}
   
   /* SIDEBAR */
   .sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100;left:0;top:0;overflow:hidden}
@@ -34,7 +34,7 @@
   .btn-logout:hover{background:var(--danger)20;color:var(--danger);border-color:var(--danger)}
   
   /* MAIN */
-  .main{position:fixed;left:220px;right:0;top:0;bottom:0;padding:24px 28px;overflow-y:auto;overflow-x:hidden;box-sizing:border-box}
+  .main{position:absolute;left:220px;right:0;top:0;min-height:100vh;padding:24px;overflow-y:auto;overflow-x:hidden}
   .page{display:none}.page.active{display:block}
   .page-header{margin-bottom:24px}
   .page-title{font-size:22px;font-weight:700}
