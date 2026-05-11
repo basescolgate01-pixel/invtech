@@ -44,7 +44,7 @@ router.post('/', auth, async (req, res) => {
 
     const estadoMap = { asignacion:'asignado', devolucion:'disponible', mantencion:'mantencion', baja:'baja' };
     if (estadoMap[tipo]) {
-      const ubicacionUpdate = tipo === 'devolucion' ? ', ubicacion = COALESCE(ubicacion, 'Bodega principal')' : '';
+      const ubicacionUpdate = tipo === 'devolucion' ? ", ubicacion = COALESCE(ubicacion, 'Bodega principal')" : '';
       await pool.query(`UPDATE equipos SET estado=$1${ubicacionUpdate}, updated_at=NOW() WHERE id=$2`, [estadoMap[tipo], equipo_id]);
     }
     await pool.query(
