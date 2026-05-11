@@ -281,11 +281,40 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
           <table>
             <thead><tr>
               <th>IMEI 1</th><th>IMEI 2</th><th>SERIE</th><th>MODELO / MARCA</th>
-              <th>ESTADO</th><th>ÁREA</th><th>ACCIONES</th>
+              <th>TIPO</th><th>ESTADO</th><th>UBICACIÓN</th><th>ÁREA</th><th>ACCIONES</th>
             </tr></thead>
             <tbody id="equipos-tbody"></tbody>
           </table>
         </div>
+      </div>
+
+      <!-- MODIFICACIÓN MASIVA -->
+      <div style="margin-top:20px">
+        <details>
+          <summary style="cursor:pointer;font-size:14px;font-weight:600;padding:14px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);list-style:none;display:flex;align-items:center;gap:8px">
+            📊 Modificación masiva desde Excel
+            <span style="font-size:12px;color:var(--text2);font-weight:400;margin-left:4px">— actualiza estado, tipo y ubicación por IMEI</span>
+          </summary>
+          <div class="card" style="border-top:none;border-radius:0 0 var(--r) var(--r);margin-top:-1px">
+            <div style="color:var(--text2);font-size:13px;margin-bottom:14px">Sube un Excel con el IMEI del equipo y los campos a modificar. Solo se actualizan los campos que completes.</div>
+            <div class="alert alert-info" style="margin-bottom:14px">
+              <strong>Columnas:</strong> imei1 (obligatorio), estado, tipo, ubicacion<br>
+              <span style="font-size:12px">Estados válidos: disponible, asignado, mantencion, baja</span>
+            </div>
+            <div class="btn-group" style="margin-bottom:14px">
+              <button class="btn btn-secondary" onclick="descargarPlantillaModif()">⬇️ Descargar plantilla</button>
+            </div>
+            <div class="form-group" style="margin-bottom:14px">
+              <label>Archivo Excel (.xlsx)</label>
+              <input type="file" id="modif-file" accept=".xlsx,.xls" class="form-control"
+                onchange="document.getElementById('modif-btn').style.display='inline-flex';document.getElementById('modif-preview').textContent='📄 '+this.files[0].name">
+            </div>
+            <div id="modif-preview" style="color:var(--text2);font-size:13px;margin-bottom:10px"></div>
+            <div id="modif-alert"></div>
+            <button class="btn btn-primary" id="modif-btn" style="display:none" onclick="subirModificacionMasiva()">📊 Procesar modificaciones</button>
+            <div id="modif-resultado" style="display:none;margin-top:14px"></div>
+          </div>
+        </details>
       </div>
     </div>
 
@@ -346,7 +375,7 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
         <div class="card">
           <div style="font-size:14px;font-weight:600;margin-bottom:4px">Importar desde Excel</div>
           <div style="color:var(--text2);font-size:13px;margin-bottom:16px">Descarga la plantilla, rellénala y súbela aquí</div>
-          <div class="alert alert-info">Columnas requeridas: <strong>imei1, imei2, numero_serie, modelo, marca, notas</strong></div>
+          <div class="alert alert-info">Columnas requeridas: <strong>imei1, imei2, numero_serie, modelo, marca, tipo, notas</strong><br><span style="font-size:12px">El campo <strong>tipo</strong> puede ser: Celular, Parlante, Audífono (o el nombre exacto del tipo)</span></div>
           <div class="btn-group" style="margin:16px 0">
             <button class="btn btn-secondary" onclick="descargarPlantilla()">⬇️ Descargar plantilla</button>
           </div>
@@ -978,7 +1007,9 @@ function buscarEquipos() {
       <td class="monospace" style="font-size:12px;color:var(--text2)">${e.imei2||'-'}</td>
       <td class="monospace" style="font-size:12px;color:var(--text2)">${e.numero_serie||'-'}</td>
       <td><div style="font-size:13px;font-weight:500">${e.modelo}</div><div style="font-size:11px;color:var(--text2)">${e.marca||''}</div></td>
+      <td style="font-size:12px">${e.tipo_icono||''}${e.tipo?' '+e.tipo:'-'}</td>
       <td><span class="badge badge-${e.estado}">${e.estado==='disponible'?'En bodega':e.estado}</span></td>
+      <td style="color:var(--text2);font-size:12px">${e.ubicacion||'-'}</td>
       <td style="color:var(--text2);font-size:12px">${e.area||'-'}</td>
       <td><div class="btn-group">
         <button class="btn btn-secondary btn-sm" onclick="abrirMovimiento(${e.id},'${e.imei1}','${e.modelo}')">📋 Mov.</button>
@@ -1367,6 +1398,37 @@ function showAlert(id,msg,type) {
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
+// MODIFICACIÓN MASIVA EQUIPOS
+async function descargarPlantillaModif() {
+  const r = await fetch(`${API}/api/equipos/plantilla-modif`, {headers:{'Authorization':`Bearer ${token}`}});
+  const blob = await r.blob();
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='plantilla_modificacion_masiva.xlsx'; a.click();
+}
+
+async function subirModificacionMasiva() {
+  const file = document.getElementById('modif-file').files[0]; if (!file) return;
+  showAlert('modif-alert','⏳ Procesando...','info');
+  document.getElementById('modif-btn').disabled = true;
+  const fd = new FormData(); fd.append('archivo', file);
+  try {
+    const r = await fetch(`${API}/api/equipos/modificar-masivo`, {method:'POST', headers:{'Authorization':`Bearer ${token}`}, body:fd});
+    const data = await r.json();
+    if (!r.ok) { showAlert('modif-alert', data.error, 'error'); return; }
+    const {exitosos, errores, total} = data.resultados;
+    showAlert('modif-alert', `✅ ${exitosos} de ${total} equipos actualizados.${errores.length?` ⚠️ ${errores.length} errores.`:''}`, exitosos>0?'success':'error');
+    const resDiv = document.getElementById('modif-resultado');
+    if (errores.length > 0) {
+      resDiv.style.display = 'block';
+      resDiv.innerHTML = `<div class="card"><div style="font-size:13px;font-weight:600;color:var(--danger);margin-bottom:8px">⚠️ Errores (${errores.length})</div>${errores.map(e=>`<div style="font-size:12px;color:var(--text2);padding:3px 0;border-bottom:1px solid #ffffff08">${e}</div>`).join('')}</div>`;
+    } else { resDiv.style.display='none'; }
+    document.getElementById('modif-file').value='';
+    document.getElementById('modif-preview').textContent='';
+    document.getElementById('modif-btn').style.display='none';
+    buscarEquipos();
+  } catch(e) { showAlert('modif-alert','Error al procesar archivo','error'); }
+  finally { document.getElementById('modif-btn').disabled=false; }
+}
+
 // TIPOS
 let tipos = [];
 let editingTipoId = null;
@@ -1382,6 +1444,13 @@ async function cargarTipos() {
     tipos.forEach(t => { const o=document.createElement('option'); o.value=t.id; o.textContent=`${t.icono} ${t.nombre}`; sel.appendChild(o); });
     sel.value = val;
   });
+  // Regenerar selects de filas masivo ya existentes
+  document.querySelectorAll('#masivo-tbody tr select').forEach(sel => {
+    const val = sel.value;
+    sel.innerHTML = '<option value="">Sin tipo</option>' + tipos.map(t=>`<option value="${t.id}">${t.icono} ${t.nombre}</option>`).join('');
+    sel.value = val;
+  });
+
   // Tabla tipos
   const tbody = document.getElementById('tipos-tbody'); if (!tbody) return;
   tbody.innerHTML = tipos.map(t => `<tr>
