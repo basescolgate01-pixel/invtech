@@ -80,7 +80,7 @@ tr:hover td{background:#ffffff04}
 
 /* ── BADGES ── */
 .badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block}
-.badge-disponible{background:#2dd4a018;color:#2dd4a0}
+.badge-disponible{background:#2dd4a018;color:#2dd4a0}.badge-en-bodega{background:#2dd4a018;color:#2dd4a0}
 .badge-asignado{background:#6c63ff18;color:#8b83ff}
 .badge-mantencion{background:#ffb02018;color:#ffb020}
 .badge-baja{background:#ff5c6c18;color:#ff5c6c}
@@ -224,7 +224,7 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
       <div class="kpi-grid">
         <div class="kpi"><div class="kpi-bar" style="background:var(--primary)"></div><div class="kpi-label">Total equipos</div><div class="kpi-val" id="kpi-total">-</div></div>
         <div class="kpi"><div class="kpi-bar" style="background:var(--secondary)"></div><div class="kpi-label">Asignados</div><div class="kpi-val" id="kpi-asignados">-</div></div>
-        <div class="kpi"><div class="kpi-bar" style="background:#8b83ff"></div><div class="kpi-label">Disponibles</div><div class="kpi-val" id="kpi-disponibles">-</div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:#8b83ff"></div><div class="kpi-label">En bodega</div><div class="kpi-val" id="kpi-disponibles">-</div></div>
         <div class="kpi"><div class="kpi-bar" style="background:var(--warning)"></div><div class="kpi-label">En mantención</div><div class="kpi-val" id="kpi-mantencion">-</div></div>
         <div class="kpi"><div class="kpi-bar" style="background:var(--danger)"></div><div class="kpi-label">Dados de baja</div><div class="kpi-val" id="kpi-baja">-</div></div>
       </div>
@@ -270,7 +270,7 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
         </div>
         <select class="form-control" style="width:170px" id="eq-estado" onchange="buscarEquipos()">
           <option value="">Todos los estados</option>
-          <option value="disponible">Disponible</option>
+          <option value="disponible">En bodega</option>
           <option value="asignado">Asignado</option>
           <option value="mantencion">Mantención</option>
           <option value="baja">Baja</option>
@@ -378,6 +378,14 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
     <!-- AUDITORÍA -->
     <div class="page" id="page-auditoria">
       <div class="page-header"><div class="page-title">Auditoría</div><div class="page-sub">Historial de movimientos</div></div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="switchAudTab('historial',this)">📋 Historial</button>
+        <button class="tab" onclick="switchAudTab('masivo',this)">📊 Movimientos masivos</button>
+      </div>
+
+      <!-- Historial -->
+      <div id="aud-historial">
       <div class="card" style="margin-bottom:16px">
         <div class="form-grid" style="gap:12px">
           <div class="form-group"><label>Buscar</label>
@@ -412,6 +420,31 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
           </table>
         </div>
       </div>
+      </div><!-- /aud-historial -->
+
+      <!-- Movimientos masivos -->
+      <div id="aud-masivo" style="display:none">
+        <div class="card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">Movimientos masivos desde Excel</div>
+          <div style="color:var(--text2);font-size:13px;margin-bottom:16px">Sube un Excel con IMEI, RUT del funcionario, tipo de movimiento y observación</div>
+          <div class="alert alert-info" style="margin-bottom:16px">
+            <strong>Columnas:</strong> imei1, rut, tipo (asignacion / devolucion / mantencion / baja), observacion
+          </div>
+          <div class="btn-group" style="margin-bottom:16px">
+            <button class="btn btn-secondary" onclick="descargarPlantillaMasivo()">⬇️ Descargar plantilla</button>
+          </div>
+          <div class="form-group" style="margin-bottom:16px">
+            <label>Archivo Excel (.xlsx)</label>
+            <input type="file" id="masivo-mov-file" accept=".xlsx,.xls" class="form-control"
+              onchange="document.getElementById('masivo-mov-btn').style.display='inline-flex';document.getElementById('masivo-mov-preview').textContent='📄 '+this.files[0].name">
+          </div>
+          <div id="masivo-mov-preview" style="color:var(--text2);font-size:13px;margin-bottom:12px"></div>
+          <div id="masivo-mov-alert"></div>
+          <button class="btn btn-primary" id="masivo-mov-btn" style="display:none" onclick="subirMovimientosMasivos()">📊 Procesar movimientos</button>
+        </div>
+        <div id="masivo-mov-resultado" style="display:none;margin-top:16px"></div>
+      </div>
+
     </div>
 
     <!-- ETIQUETAS -->
@@ -659,7 +692,7 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
       <label>Tipo de movimiento</label>
       <div class="chips" id="mov-tipo-group">
         <button class="chip active" onclick="selMovTipo('asignacion',this)">Asignación</button>
-        <button class="chip" onclick="selMovTipo('devolucion',this)">Devolución</button>
+        <button class="chip" onclick="selMovTipo('devolucion',this)">Devolución (→ bodega)</button>
         <button class="chip" onclick="selMovTipo('mantencion',this)">Mantención</button>
         <button class="chip" onclick="selMovTipo('baja',this)">Baja</button>
       </div>
@@ -722,7 +755,7 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
     <div class="form-grid" style="margin-bottom:14px">
       <div class="form-group"><label>Estado</label>
         <select class="form-control" id="eq-estado-edit">
-          <option value="disponible">Disponible</option>
+          <option value="disponible">En bodega</option>
           <option value="asignado">Asignado</option>
           <option value="mantencion">Mantención</option>
           <option value="baja">Baja</option>
@@ -730,7 +763,7 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
       </div>
       <div class="form-group"><label>Tipo de equipo</label><select class="form-control" id="eq-tipo-edit"><option value="">Sin tipo</option></select></div>
     </div>
-    <div class="form-group" style="margin-bottom:14px"><label>Notas</label><input class="form-control" id="eq-notas"></div>
+    <div class="form-grid" style="margin-bottom:14px"><div class="form-group"><label>Notas</label><input class="form-control" id="eq-notas"></div><div class="form-group"><label>Ubicación / Bodega</label><input class="form-control" id="eq-ubicacion" placeholder="Ej: Bodega principal"></div></div>
     <div id="equipo-edit-alert"></div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-equipo')">Cancelar</button>
@@ -945,11 +978,11 @@ function buscarEquipos() {
       <td class="monospace" style="font-size:12px;color:var(--text2)">${e.imei2||'-'}</td>
       <td class="monospace" style="font-size:12px;color:var(--text2)">${e.numero_serie||'-'}</td>
       <td><div style="font-size:13px;font-weight:500">${e.modelo}</div><div style="font-size:11px;color:var(--text2)">${e.marca||''}</div></td>
-      <td><span class="badge badge-${e.estado}">${e.estado}</span></td>
+      <td><span class="badge badge-${e.estado}">${e.estado==='disponible'?'En bodega':e.estado}</span></td>
       <td style="color:var(--text2);font-size:12px">${e.area||'-'}</td>
       <td><div class="btn-group">
         <button class="btn btn-secondary btn-sm" onclick="abrirMovimiento(${e.id},'${e.imei1}','${e.modelo}')">📋 Mov.</button>
-        ${usuario.rol==='admin'?`<button class="btn btn-secondary btn-sm" onclick="abrirEditarEquipo(${e.id},'${e.imei1}','${e.imei2||''}','${e.numero_serie||''}','${e.modelo}','${e.marca||''}','${e.estado}','${e.notas||''}')">✏️</button>
+        ${usuario.rol==='admin'?`<button class="btn btn-secondary btn-sm" onclick="abrirEditarEquipo(${e.id},'${e.imei1}','${e.imei2||''}','${e.numero_serie||''}','${e.modelo}','${e.marca||''}','${e.estado}','${e.notas||''}','${e.ubicacion||''}')">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="eliminarEquipo(${e.id},'${e.imei1}')">🗑️</button>`:''}
       </div></td></tr>`).join('');
   }, 300);
@@ -966,12 +999,12 @@ async function crearEquipoManual() {
   const imei1 = document.getElementById('m-imei1').value.trim();
   const modelo = document.getElementById('m-modelo').value.trim();
   if (!imei1||!modelo) { showAlert('manual-alert','IMEI 1 y Modelo son requeridos','error'); return; }
-  const body = {imei1, imei2:document.getElementById('m-imei2').value.trim()||null, numero_serie:document.getElementById('m-serie').value.trim()||null, modelo, marca:document.getElementById('m-marca').value.trim()||null, notas:document.getElementById('m-notas').value.trim()||null, tipo_id:document.getElementById('m-tipo').value||null};
+  const body = {imei1, imei2:document.getElementById('m-imei2').value.trim()||null, numero_serie:document.getElementById('m-serie').value.trim()||null, modelo, marca:document.getElementById('m-marca').value.trim()||null, notas:document.getElementById('m-notas').value.trim()||null, tipo_id:document.getElementById('m-tipo').value||null, ubicacion:document.getElementById('m-ubicacion').value.trim()||null};
   const r = await api('/equipos',{method:'POST',body:JSON.stringify(body)}); if (!r) return;
   const data = await r.json();
   if (!r.ok) { showAlert('manual-alert',data.error,'error'); return; }
   showAlert('manual-alert',`✅ Equipo ${imei1} creado correctamente`,'success');
-  ['m-imei1','m-imei2','m-serie','m-modelo','m-marca','m-notas'].forEach(id => document.getElementById(id).value='');
+  ['m-imei1','m-imei2','m-serie','m-modelo','m-marca','m-notas','m-ubicacion'].forEach(id => document.getElementById(id).value='');
 }
 
 function addFilaMasivo() {
@@ -1030,7 +1063,7 @@ async function buscarEquipoScanner() {
   const div = document.getElementById('scan-result');
   if (!r||!r.ok) { div.innerHTML=`<div class="alert alert-error">❌ Equipo no encontrado: ${q}</div>`; return; }
   const e = await r.json();
-  div.innerHTML = `<div class="card"><div class="flex-between" style="margin-bottom:14px"><div><div style="font-size:16px;font-weight:600">${e.modelo}</div><div style="color:var(--text2);font-size:13px">${e.marca||''}</div></div><span class="badge badge-${e.estado}">${e.estado}</span></div>
+  div.innerHTML = `<div class="card"><div class="flex-between" style="margin-bottom:14px"><div><div style="font-size:16px;font-weight:600">${e.modelo}</div><div style="color:var(--text2);font-size:13px">${e.marca||''}</div></div><span class="badge badge-${e.estado}">${e.estado==='disponible'?'En bodega':e.estado}</span></div>
     <div class="form-grid-3" style="gap:12px;margin-bottom:16px">
       <div><div style="font-size:11px;color:var(--text2)">IMEI 1</div><div class="monospace" style="font-size:13px">${e.imei1}</div></div>
       <div><div style="font-size:11px;color:var(--text2)">IMEI 2</div><div class="monospace" style="font-size:13px">${e.imei2||'-'}</div></div>
@@ -1121,6 +1154,44 @@ async function exportarExcel() {
   }
 }
 
+// AUDITORÍA TABS
+function switchAudTab(tab, el) {
+  document.getElementById('aud-historial').style.display = tab==='historial' ? 'block' : 'none';
+  document.getElementById('aud-masivo').style.display = tab==='masivo' ? 'block' : 'none';
+  document.querySelectorAll('#page-auditoria .tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// MOVIMIENTOS MASIVOS
+async function descargarPlantillaMasivo() {
+  const r = await fetch(`${API}/api/asignaciones/plantilla-masivo`, {headers:{'Authorization':`Bearer ${token}`}});
+  const blob = await r.blob();
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='plantilla_movimientos_masivos.xlsx'; a.click();
+}
+
+async function subirMovimientosMasivos() {
+  const file = document.getElementById('masivo-mov-file').files[0]; if (!file) return;
+  showAlert('masivo-mov-alert','⏳ Procesando movimientos...','info');
+  document.getElementById('masivo-mov-btn').disabled = true;
+  const fd = new FormData(); fd.append('archivo', file);
+  try {
+    const r = await fetch(`${API}/api/asignaciones/masivo`, {method:'POST', headers:{'Authorization':`Bearer ${token}`}, body:fd});
+    const data = await r.json();
+    if (!r.ok) { showAlert('masivo-mov-alert', data.error, 'error'); return; }
+    const {exitosos, errores, total} = data.resultados;
+    showAlert('masivo-mov-alert', `✅ ${exitosos} de ${total} movimientos procesados.${errores.length?` ⚠️ ${errores.length} errores.`:''}`, exitosos>0?'success':'error');
+    const resDiv = document.getElementById('masivo-mov-resultado');
+    if (errores.length > 0) {
+      resDiv.style.display = 'block';
+      resDiv.innerHTML = `<div class="card"><div style="font-size:13px;font-weight:600;color:var(--danger);margin-bottom:10px">⚠️ Errores (${errores.length})</div>${errores.map(e=>`<div style="font-size:12px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border)20">${e}</div>`).join('')}</div>`;
+    } else { resDiv.style.display='none'; }
+    document.getElementById('masivo-mov-file').value='';
+    document.getElementById('masivo-mov-preview').textContent='';
+    document.getElementById('masivo-mov-btn').style.display='none';
+  } catch(e) { showAlert('masivo-mov-alert','Error al procesar archivo','error'); }
+  finally { document.getElementById('masivo-mov-btn').disabled=false; }
+}
+
 // ETIQUETAS
 function switchEtqTab(tab, el) {
   ['buscar','masivo','todos'].forEach(t => document.getElementById('etq-'+t).style.display = t===tab?'block':'none');
@@ -1153,7 +1224,7 @@ async function cargarTodosEtiquetas() {
     <div class="equipo-row" onclick="toggleEquipoEtq(${e.id},this)">
       <input type="checkbox" data-id="${e.id}" data-equipo='${JSON.stringify(e).replace(/'/g,"&#39;")}' style="accent-color:var(--primary);width:16px;height:16px">
       <div style="flex:1"><div style="font-size:13px;font-weight:500">${e.modelo}</div><div style="font-size:11px;color:var(--text2);font-family:'DM Mono',monospace">${e.imei1}</div></div>
-      <span class="badge badge-${e.estado}">${e.estado}</span>
+      <span class="badge badge-${e.estado}">${e.estado==='disponible'?'En bodega':e.estado}</span>
     </div>`).join('');
 }
 
@@ -1256,7 +1327,7 @@ async function desactivarUsuario(id) {
 }
 
 // ADMIN - EQUIPOS
-function abrirEditarEquipo(id,imei1,imei2,serie,modelo,marca,estado,notas) {
+function abrirEditarEquipo(id,imei1,imei2,serie,modelo,marca,estado,notas,ubicacion) {
   editingEquipoId=id;
   document.getElementById('eq-imei1').value=imei1||'';
   document.getElementById('eq-imei2').value=imei2||'';
@@ -1265,6 +1336,7 @@ function abrirEditarEquipo(id,imei1,imei2,serie,modelo,marca,estado,notas) {
   document.getElementById('eq-marca').value=marca||'';
   document.getElementById('eq-estado-edit').value=estado||'disponible';
   document.getElementById('eq-notas').value=notas||'';
+  document.getElementById('eq-ubicacion').value=ubicacion||'';
   document.getElementById('equipo-edit-alert').innerHTML='';
   document.getElementById('modal-equipo').classList.add('open');
 }
@@ -1272,7 +1344,7 @@ function abrirEditarEquipo(id,imei1,imei2,serie,modelo,marca,estado,notas) {
 async function guardarEquipo() {
   const imei1=document.getElementById('eq-imei1').value.trim(), modelo=document.getElementById('eq-modelo').value.trim();
   if (!imei1||!modelo) { showAlert('equipo-edit-alert','IMEI 1 y modelo son requeridos','error'); return; }
-  const body={imei1, imei2:document.getElementById('eq-imei2').value.trim()||null, numero_serie:document.getElementById('eq-serie').value.trim()||null, modelo, marca:document.getElementById('eq-marca').value.trim()||null, estado:document.getElementById('eq-estado-edit').value, notas:document.getElementById('eq-notas').value.trim()||null};
+  const body={imei1, imei2:document.getElementById('eq-imei2').value.trim()||null, numero_serie:document.getElementById('eq-serie').value.trim()||null, modelo, marca:document.getElementById('eq-marca').value.trim()||null, estado:document.getElementById('eq-estado-edit').value, notas:document.getElementById('eq-notas').value.trim()||null, ubicacion:document.getElementById('eq-ubicacion').value.trim()||null};
   const r = await api(`/equipos/${editingEquipoId}`,{method:'PUT',body:JSON.stringify(body)}); if (!r) return;
   const data = await r.json();
   if (!r.ok) { showAlert('equipo-edit-alert',data.error,'error'); return; }

@@ -133,14 +133,14 @@ router.get('/ficha/:imei1', async (req, res) => {
 // POST /api/equipos
 router.post('/', auth, async (req, res) => {
   try {
-    const { imei1, imei2, numero_serie, modelo, marca, notas, area_id, tipo_id } = req.body;
+    const { imei1, imei2, numero_serie, modelo, marca, notas, area_id, tipo_id, ubicacion } = req.body;
     if (!imei1 || !modelo) return res.status(400).json({ error: 'IMEI 1 y modelo son requeridos' });
     const exists = await pool.query('SELECT id FROM equipos WHERE imei1 = $1', [imei1]);
     if (exists.rows.length > 0) return res.status(400).json({ error: 'Ya existe un equipo con ese IMEI 1' });
     const result = await pool.query(`
-      INSERT INTO equipos (imei1, imei2, numero_serie, modelo, marca, notas, area_id, tipo_id)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *
-    `, [imei1, imei2||null, numero_serie||null, modelo, marca||null, notas||null, area_id||null, tipo_id||null]);
+      INSERT INTO equipos (imei1, imei2, numero_serie, modelo, marca, notas, area_id, tipo_id, ubicacion)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *
+    `, [imei1, imei2||null, numero_serie||null, modelo, marca||null, notas||null, area_id||null, tipo_id||null, ubicacion||null]);
     const equipo = result.rows[0];
     await pool.query(`INSERT INTO asignaciones (equipo_id, usuario_id, tipo, observacion) VALUES ($1,$2,'ingreso',$3)`,
       [equipo.id, req.usuario.id, notas || 'Ingreso inicial al sistema']);
@@ -204,15 +204,15 @@ router.post('/masivo', auth, async (req, res) => {
 // PUT /api/equipos/:id - solo admin
 router.put('/:id', auth, soloAdmin, async (req, res) => {
   try {
-    const { imei1, imei2, numero_serie, modelo, marca, notas, area_id, estado, tipo_id } = req.body;
+    const { imei1, imei2, numero_serie, modelo, marca, notas, area_id, estado, tipo_id, ubicacion } = req.body;
     const result = await pool.query(`
       UPDATE equipos SET
         imei1 = COALESCE($1, imei1), imei2 = $2, numero_serie = $3,
         modelo = COALESCE($4, modelo), marca = $5, notas = $6,
         area_id = $7, estado = COALESCE($8, estado), tipo_id = $9,
-        updated_at = NOW()
-      WHERE id = $10 RETURNING *
-    `, [imei1, imei2||null, numero_serie||null, modelo, marca||null, notas||null, area_id||null, estado, tipo_id||null, req.params.id]);
+        ubicacion = $10, updated_at = NOW()
+      WHERE id = $11 RETURNING *
+    `, [imei1, imei2||null, numero_serie||null, modelo, marca||null, notas||null, area_id||null, estado, tipo_id||null, ubicacion||null, req.params.id]);
     if (!result.rows.length) return res.status(404).json({ error: 'Equipo no encontrado' });
     res.json({ ok: true, equipo: result.rows[0] });
   } catch (err) {
