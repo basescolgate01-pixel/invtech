@@ -14,7 +14,7 @@
     --text:#e8e8f0;--text2:#9898b0;--text3:#5858708;--border:#2a2a32;
     --radius:10px;--radius-sm:6px
   }
-  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
   
   /* SIDEBAR */
   .sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100}
@@ -34,7 +34,7 @@
   .btn-logout:hover{background:var(--danger)20;color:var(--danger);border-color:var(--danger)}
   
   /* MAIN */
-  .main{margin-left:220px;flex:1;padding:24px;overflow-y:auto;min-height:100vh}
+  .main{margin-left:220px;padding:24px;overflow-y:auto;min-height:100vh;width:calc(100% - 220px);box-sizing:border-box}
   .page{display:none}.page.active{display:block}
   .page-header{margin-bottom:24px}
   .page-title{font-size:22px;font-weight:700}
