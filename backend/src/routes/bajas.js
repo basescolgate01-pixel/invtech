@@ -147,25 +147,67 @@ router.get('/archivo/:id', auth, async (req, res) => {
   }
 });
 
-// GET /api/bajas — listado de todas las bajas (para reporte)
+// GET /api/bajas — listado de todas las bajas con filtros
 router.get('/', auth, async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT e.id, e.tipo_baja, e.nombre_receptor,
-              TO_CHAR(e.fecha_regalo, 'DD/MM/YYYY') as fecha_regalo,
-              e.descripcion, e.archivo_nombre,
-              TO_CHAR(e.fecha, 'DD/MM/YYYY HH24:MI') as fecha,
-              u.nombre as usuario,
-              eq.imei1, eq.modelo, eq.marca
-       FROM evidencias_baja e
-       JOIN usuarios u ON e.usuario_id = u.id
-       JOIN equipos eq ON e.equipo_id = eq.id
-       ORDER BY e.fecha DESC
-       LIMIT 500`
-    );
+    const { tipo_baja, desde, hasta } = req.query;
+    let query = `
+      SELECT e.id, e.tipo_baja, e.nombre_receptor,
+             TO_CHAR(e.fecha_regalo, 'DD/MM/YYYY') as fecha_regalo,
+             e.descripcion, e.archivo_nombre, e.archivo_tipo, e.archivo_tamano,
+             TO_CHAR(e.fecha, 'DD/MM/YYYY HH24:MI') as fecha,
+             u.nombre as usuario,
+             eq.imei1, eq.modelo, eq.marca
+      FROM evidencias_baja e
+      JOIN usuarios u ON e.usuario_id = u.id
+      JOIN equipos eq ON e.equipo_id = eq.id
+      WHERE 1=1`;
+    const params = [];
+    if (tipo_baja) { params.push(tipo_baja); query += ` AND e.tipo_baja=$${params.length}`; }
+    if (desde) { params.push(desde); query += ` AND e.fecha >= $${params.length}`; }
+    if (hasta) { params.push(hasta+' 23:59:59'); query += ` AND e.fecha <= $${params.length}`; }
+    query += ' ORDER BY e.fecha DESC LIMIT 500';
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener bajas' });
+  }
+});
+
+// GET /api/bajas/export/excel
+router.get('/export/excel', auth, async (req, res) => {
+  try {
+    const xlsx = require('xlsx');
+    const { tipo_baja, desde, hasta } = req.query;
+    let query = `
+      SELECT TO_CHAR(e.fecha,'DD/MM/YYYY HH24:MI') as fecha,
+             eq.imei1, eq.modelo, eq.marca,
+             e.tipo_baja, e.nombre_receptor,
+             TO_CHAR(e.fecha_regalo,'DD/MM/YYYY') as fecha_regalo,
+             e.descripcion, e.archivo_nombre,
+             u.nombre as usuario
+      FROM evidencias_baja e
+      JOIN usuarios u ON e.usuario_id = u.id
+      JOIN equipos eq ON e.equipo_id = eq.id
+      WHERE 1=1`;
+    const params = [];
+    if (tipo_baja) { params.push(tipo_baja); query += ` AND e.tipo_baja=$${params.length}`; }
+    if (desde) { params.push(desde); query += ` AND e.fecha >= $${params.length}`; }
+    if (hasta) { params.push(hasta+' 23:59:59'); query += ` AND e.fecha <= $${params.length}`; }
+    query += ' ORDER BY e.fecha DESC';
+    const result = await pool.query(query, params);
+    const wb = xlsx.utils.book_new();
+    const ws = xlsx.utils.json_to_sheet(result.rows, {
+      header: ['fecha','imei1','modelo','marca','tipo_baja','nombre_receptor','fecha_regalo','descripcion','archivo_nombre','usuario']
+    });
+    ws['!cols'] = [{wch:18},{wch:18},{wch:20},{wch:14},{wch:14},{wch:20},{wch:14},{wch:30},{wch:25},{wch:16}];
+    xlsx.utils.book_append_sheet(wb, ws, 'Bajas');
+    const buffer = xlsx.write(wb, { type:'buffer', bookType:'xlsx' });
+    res.setHeader('Content-Disposition', 'attachment; filename=bajas.xlsx');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buffer);
+  } catch(err) {
+    res.status(500).json({ error: 'Error al exportar' });
   }
 });
 

@@ -413,6 +413,7 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
       <div class="tabs">
         <button class="tab active" onclick="switchAudTab('historial',this)">📋 Historial</button>
         <button class="tab" onclick="switchAudTab('masivo',this)">📊 Movimientos masivos</button>
+        <button class="tab" onclick="switchAudTab('bajas',this)">❌ Registros de baja</button>
       </div>
 
       <!-- Historial -->
@@ -474,6 +475,39 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
           <button class="btn btn-primary" id="masivo-mov-btn" style="display:none" onclick="subirMovimientosMasivos()">📊 Procesar movimientos</button>
         </div>
         <div id="masivo-mov-resultado" style="display:none;margin-top:16px"></div>
+      </div>
+
+      <!-- REGISTROS DE BAJA -->
+      <div id="aud-bajas" style="display:none">
+        <div class="card" style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <div class="search-row" style="flex:1;min-width:200px">
+              <select class="form-control" id="baja-filtro-tipo" onchange="cargarRegistrosBaja()" style="width:200px">
+                <option value="">Todos los tipos</option>
+                <option value="regalo">🎁 Regalo</option>
+                <option value="desecho">📋 Desecho</option>
+                <option value="robo">🛠️ Robo/Pérdida</option>
+                <option value="obsoleto">🔧 Obsoleto</option>
+                <option value="otro">❓ Otro</option>
+              </select>
+              <input class="form-control" id="baja-filtro-desde" type="date" onchange="cargarRegistrosBaja()" placeholder="Desde">
+              <input class="form-control" id="baja-filtro-hasta" type="date" onchange="cargarRegistrosBaja()" placeholder="Hasta">
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="exportarBajasExcel()">📊 Excel</button>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:10px" id="bajas-count"></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>FECHA</th><th>IMEI</th><th>MODELO</th><th>TIPO BAJA</th>
+                <th>DETALLE</th><th>ARCHIVO</th><th>USUARIO</th>
+              </tr></thead>
+              <tbody id="bajas-tbody"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -840,6 +874,23 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
   </div>
 </div>
 
+<!-- MODAL EVIDENCIA BAJA -->
+<div class="modal" id="modal-evidencia">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">📎 Evidencia de baja</div>
+      <button class="modal-close" onclick="closeModal('modal-evidencia')">✕</button>
+    </div>
+    <div id="evidencia-equipo-info" class="alert alert-info" style="margin-bottom:16px"></div>
+    <div id="evidencia-contenido">
+      <div style="text-align:center;padding:24px;color:var(--text2)">Cargando...</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-evidencia')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL USUARIO -->
 <div class="modal" id="modal-usuario">
   <div class="modal-box">
@@ -1110,7 +1161,8 @@ function buscarEquipos() {
       <td style="color:var(--text2);font-size:12px">${e.ubicacion||'-'}</td>
       <td style="color:var(--text2);font-size:12px">${e.area||'-'}</td>
       <td><div class="btn-group">
-        <button class="btn btn-secondary btn-sm" onclick="abrirMovimiento(${e.id},'${e.imei1}','${e.modelo}')">📋 Mov.</button>
+        ${e.estado!=='baja'?`<button class="btn btn-secondary btn-sm" onclick="abrirMovimiento(${e.id},'${e.imei1}','${e.modelo}')">📋 Mov.</button>`:''}
+        ${e.estado==='baja'?`<button class="btn btn-secondary btn-sm" onclick="verEvidenciaBaja(${e.id},'${e.imei1}','${e.modelo}')">📎 Evidencia</button>`:''}
         ${usuario.rol==='admin'?`<button class="btn btn-secondary btn-sm" onclick="abrirEditarEquipo(${e.id},'${e.imei1}','${e.imei2||''}','${e.numero_serie||''}','${e.modelo}','${e.marca||''}','${e.estado}','${e.notas||''}','${e.ubicacion||''}',${e.tipo_id||'null'})">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="eliminarEquipo(${e.id},'${e.imei1}')">🗑️</button>`:''}
       </div></td></tr>`).join('');
@@ -1372,8 +1424,115 @@ async function exportarExcel() {
 function switchAudTab(tab, el) {
   document.getElementById('aud-historial').style.display = tab==='historial' ? 'block' : 'none';
   document.getElementById('aud-masivo').style.display = tab==='masivo' ? 'block' : 'none';
+  document.getElementById('aud-bajas').style.display = tab==='bajas' ? 'block' : 'none';
   document.querySelectorAll('#page-auditoria .tabs .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
+  if (tab==='bajas') cargarRegistrosBaja();
+}
+
+// ICONO Y LABEL POR TIPO DE BAJA
+function tipoBajaLabel(tipo) {
+  const map = {regalo:'🎁 Regalo', desecho:'📋 Desecho', robo:'🛠️ Robo/Pérdida', obsoleto:'🔧 Obsoleto', otro:'❓ Otro'};
+  return map[tipo] || tipo;
+}
+function archivoIcono(tipo) {
+  if (!tipo) return '📎';
+  if (tipo.startsWith('image/')) return '🖼️';
+  if (tipo === 'application/pdf') return '📄';
+  return '📎';
+}
+function formatBytes(b) {
+  if (!b) return '';
+  if (b < 1024) return b+'B';
+  if (b < 1024*1024) return Math.round(b/1024)+'KB';
+  return (b/1024/1024).toFixed(1)+'MB';
+}
+
+// VER EVIDENCIA DESDE TABLA DE EQUIPOS
+async function verEvidenciaBaja(equipoId, imei1, modelo) {
+  document.getElementById('evidencia-equipo-info').innerHTML = `<strong>${modelo}</strong> — IMEI: ${imei1}`;
+  document.getElementById('evidencia-contenido').innerHTML = '<div style="text-align:center;padding:24px;color:var(--text2)">Cargando...</div>';
+  document.getElementById('modal-evidencia').classList.add('open');
+  const r = await fetch(`${API}/api/bajas/${equipoId}`, {headers:{'Authorization':`Bearer ${token}`}});
+  if (!r.ok) { document.getElementById('evidencia-contenido').innerHTML = '<div style="color:var(--danger);padding:16px">Error al cargar evidencias</div>'; return; }
+  const evs = await r.json();
+  if (!evs.length) {
+    document.getElementById('evidencia-contenido').innerHTML = '<div style="color:var(--text2);padding:16px;text-align:center">Sin evidencias registradas</div>';
+    return;
+  }
+  document.getElementById('evidencia-contenido').innerHTML = evs.map(ev => `
+    <div style="border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <span style="font-weight:600;font-size:13px">${tipoBajaLabel(ev.tipo_baja)}</span>
+        <span style="font-size:11px;color:var(--text2)">${ev.fecha} — ${ev.usuario}</span>
+      </div>
+      ${ev.tipo_baja==='regalo'?`<div style="font-size:13px;margin-bottom:4px">👤 Receptor: <strong>${ev.nombre_receptor}</strong></div><div style="font-size:12px;color:var(--text2)">📅 Fecha entrega: ${ev.fecha_regalo||'-'}</div>`:''}
+      ${ev.descripcion?`<div style="font-size:12px;color:var(--text2);margin-top:4px">📝 ${ev.descripcion}</div>`:''}
+      ${ev.archivo_nombre?`
+        <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:6px;padding:8px 12px">
+          <span style="font-size:12px">${archivoIcono(ev.archivo_tipo)} ${ev.archivo_nombre} <span style="color:var(--text2)">(${formatBytes(ev.archivo_tamano)})</span></span>
+          <button class="btn btn-secondary btn-sm" onclick="descargarEvidencia(${ev.id},'${ev.archivo_nombre}')">⬇️ Descargar</button>
+        </div>`:'<div style="font-size:12px;color:var(--text2);margin-top:6px">Sin archivo adjunto</div>'}
+    </div>`).join('');
+}
+
+// DESCARGAR ARCHIVO DE EVIDENCIA
+async function descargarEvidencia(evidenciaId, nombre) {
+  const r = await fetch(`${API}/api/bajas/archivo/${evidenciaId}`, {headers:{'Authorization':`Bearer ${token}`}});
+  if (!r.ok) { alert('No se pudo descargar el archivo'); return; }
+  const blob = await r.blob();
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nombre; a.click();
+}
+
+// TABLA REGISTROS DE BAJA (auditoría)
+async function cargarRegistrosBaja() {
+  const tipo = document.getElementById('baja-filtro-tipo').value;
+  const desde = document.getElementById('baja-filtro-desde').value;
+  const hasta = document.getElementById('baja-filtro-hasta').value;
+  const p = new URLSearchParams();
+  if (tipo) p.append('tipo_baja', tipo);
+  if (desde) p.append('desde', desde);
+  if (hasta) p.append('hasta', hasta);
+  const r = await fetch(`${API}/api/bajas?${p}`, {headers:{'Authorization':`Bearer ${token}`}});
+  if (!r.ok) return;
+  const bajas = await r.json();
+  document.getElementById('bajas-count').textContent = `${bajas.length} registros`;
+  const tbody = document.getElementById('bajas-tbody');
+  if (!bajas.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:32px">Sin registros</td></tr>';
+    return;
+  }
+  tbody.innerHTML = bajas.map(b => `<tr>
+    <td style="font-size:12px;white-space:nowrap">${b.fecha}</td>
+    <td class="monospace" style="font-size:12px">${b.imei1}</td>
+    <td style="font-size:13px">${b.modelo}${b.marca?' <span style="color:var(--text2);font-size:11px">'+b.marca+'</span>':''}</td>
+    <td><span class="badge badge-baja">${tipoBajaLabel(b.tipo_baja)}</span></td>
+    <td style="font-size:12px;color:var(--text2)">
+      ${b.tipo_baja==='regalo'?`👤 ${b.nombre_receptor||'-'} · 📅 ${b.fecha_regalo||'-'}`:b.descripcion||'-'}
+    </td>
+    <td>
+      ${b.archivo_nombre
+        ? `<button class="btn btn-secondary btn-sm" onclick="descargarEvidencia(${b.id},'${b.archivo_nombre}')">${archivoIcono(b.archivo_tipo)} Descargar</button>`
+        : '<span style="color:var(--text2);font-size:12px">Sin archivo</span>'}
+    </td>
+    <td style="font-size:12px;color:var(--text2)">${b.usuario}</td>
+  </tr>`).join('');
+}
+
+// EXPORTAR BAJAS EXCEL
+async function exportarBajasExcel() {
+  const tipo = document.getElementById('baja-filtro-tipo').value;
+  const desde = document.getElementById('baja-filtro-desde').value;
+  const hasta = document.getElementById('baja-filtro-hasta').value;
+  const p = new URLSearchParams();
+  if (tipo) p.append('tipo_baja', tipo);
+  if (desde) p.append('desde', desde);
+  if (hasta) p.append('hasta', hasta);
+  const r = await fetch(`${API}/api/bajas/export/excel?${p}`, {headers:{'Authorization':`Bearer ${token}`}});
+  if (!r.ok) { alert('Error al exportar'); return; }
+  const blob = await r.blob();
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`bajas_${new Date().toISOString().slice(0,10)}.xlsx`; a.click();
 }
 
 // MOVIMIENTOS MASIVOS
