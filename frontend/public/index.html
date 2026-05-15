@@ -885,6 +885,11 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
     <div id="evidencia-contenido">
       <div style="text-align:center;padding:24px;color:var(--text2)">Cargando...</div>
     </div>
+    <!-- Input oculto para actualizar archivo -->
+    <input type="file" id="evidencia-file-input" style="display:none"
+      accept="image/*,application/pdf,.doc,.docx,.txt"
+      onchange="confirmarSubidaEvidencia(this)">
+    <div id="evidencia-upload-alert" style="margin-top:8px"></div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-evidencia')">Cerrar</button>
     </div>
@@ -1450,7 +1455,9 @@ function formatBytes(b) {
 
 // VER EVIDENCIA DESDE TABLA DE EQUIPOS
 async function verEvidenciaBaja(equipoId, imei1, modelo) {
-  document.getElementById('evidencia-equipo-info').innerHTML = `<strong>${modelo}</strong> — IMEI: ${imei1}`;
+  const infoEl = document.getElementById('evidencia-equipo-info');
+  infoEl.innerHTML = `<strong>${modelo}</strong> — IMEI: ${imei1}`;
+  infoEl.dataset.equipoId = equipoId;
   document.getElementById('evidencia-contenido').innerHTML = '<div style="text-align:center;padding:24px;color:var(--text2)">Cargando...</div>';
   document.getElementById('modal-evidencia').classList.add('open');
   const r = await fetch(`${API}/api/bajas/${equipoId}`, {headers:{'Authorization':`Bearer ${token}`}});
@@ -1473,7 +1480,7 @@ async function verEvidenciaBaja(equipoId, imei1, modelo) {
             <span style="font-size:12px">${archivoIcono(ev.archivo_tipo)} ${ev.archivo_nombre} <span style="color:var(--text2)">(${formatBytes(ev.archivo_tamano)})</span></span>
             ${ev.archivo_disponible
               ? `<button class="btn btn-secondary btn-sm" onclick="descargarEvidencia(${ev.id},'${ev.archivo_nombre}')">⬇️ Descargar</button>`
-              : `<span style="font-size:11px;color:var(--text2)">⚠️ No disponible</span>`
+              : `<button class="btn btn-primary btn-sm" onclick="solicitarArchivoEvidencia(${ev.id})">📎 Actualizar archivo</button>`
             }
            </div>`
         : '<div style="font-size:12px;color:var(--text2);margin-top:6px">Sin archivo adjunto</div>'}
@@ -1508,6 +1515,42 @@ async function descargarEvidencia(evidenciaId, nombre) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   } catch(e) {
     alert('Error de conexión al descargar el archivo');
+  }
+}
+
+// ACTUALIZAR ARCHIVO DE EVIDENCIA (para registros sin archivo_data)
+let _evidenciaIdParaSubir = null;
+function solicitarArchivoEvidencia(evidenciaId) {
+  _evidenciaIdParaSubir = evidenciaId;
+  document.getElementById('evidencia-file-input').value = '';
+  document.getElementById('evidencia-file-input').click();
+}
+
+async function confirmarSubidaEvidencia(input) {
+  const file = input.files[0];
+  if (!file || !_evidenciaIdParaSubir) return;
+  const alertEl = document.getElementById('evidencia-upload-alert');
+  alertEl.innerHTML = '<div class="alert alert-info">⏳ Subiendo archivo...</div>';
+  const fd = new FormData();
+  fd.append('archivo', file);
+  try {
+    const r = await fetch(`${API}/api/bajas/archivo/${_evidenciaIdParaSubir}`, {
+      method: 'PUT',
+      headers: {'Authorization': `Bearer ${token}`},
+      body: fd
+    });
+    const data = await r.json();
+    if (!r.ok) { alertEl.innerHTML = `<div class="alert alert-error">❌ ${data.error}</div>`; return; }
+    alertEl.innerHTML = '<div class="alert alert-success">✅ Archivo actualizado correctamente</div>';
+    const infoEl = document.getElementById('evidencia-equipo-info');
+    const equipoId = infoEl.dataset.equipoId;
+    if (equipoId) {
+      const imei = infoEl.textContent.match(/IMEI: (.+)/)?.[1] || '';
+      verEvidenciaBaja(equipoId, imei, '');
+    }
+    setTimeout(() => { alertEl.innerHTML = ''; }, 3000);
+  } catch(e) {
+    alertEl.innerHTML = '<div class="alert alert-error">❌ Error de conexión</div>';
   }
 }
 

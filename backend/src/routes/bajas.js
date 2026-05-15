@@ -143,6 +143,32 @@ router.get('/export/excel', auth, async (req, res) => {
   }
 });
 
+// PUT /api/bajas/archivo/:id — actualizar archivo de evidencia existente
+// ⚠️ ANTES de /:equipo_id
+router.put('/archivo/:id', auth, upload.single('archivo'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Archivo requerido' });
+    const check = await pool.query('SELECT id FROM evidencias_baja WHERE id=$1', [req.params.id]);
+    if (!check.rows.length) return res.status(404).json({ error: 'Evidencia no encontrada' });
+
+    const archivoNombre = req.file.originalname;
+    const archivoTipo   = req.file.mimetype;
+    const archivoTamano = req.file.size;
+    const archivoData   = req.file.buffer.toString('base64');
+
+    await pool.query(
+      `UPDATE evidencias_baja
+       SET archivo_nombre=$1, archivo_tipo=$2, archivo_tamano=$3, archivo_data=$4
+       WHERE id=$5`,
+      [archivoNombre, archivoTipo, archivoTamano, archivoData, req.params.id]
+    );
+    res.json({ ok: true, mensaje: 'Archivo actualizado correctamente' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar archivo' });
+  }
+});
+
 // GET /api/bajas/archivo/:id — descargar archivo desde DB
 // ⚠️ ANTES de /:equipo_id
 router.get('/archivo/:id', auth, async (req, res) => {
