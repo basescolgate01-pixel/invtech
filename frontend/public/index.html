@@ -83,6 +83,8 @@ tr:hover td{background:#ffffff04}
 .badge-disponible{background:#2dd4a018;color:#2dd4a0}.badge-en-bodega{background:#2dd4a018;color:#2dd4a0}
 .badge-asignado{background:#6c63ff18;color:#8b83ff}
 .badge-mantencion{background:#ffb02018;color:#ffb020}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#e04050}
 .badge-baja{background:#ff5c6c18;color:#ff5c6c}
 .badge-ingreso{background:#2dd4a018;color:#2dd4a0}
 .badge-devolucion{background:#ffb02018;color:#ffb020}
@@ -717,27 +719,123 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
   <div class="modal-box">
     <div class="modal-header"><div class="modal-title">Registrar movimiento</div><button class="modal-close" onclick="closeModal('modal-mov')">✕</button></div>
     <div id="mov-equipo-info" class="alert alert-info" style="margin-bottom:16px"></div>
+
+    <!-- Tipo de movimiento -->
     <div class="form-group" style="margin-bottom:16px">
       <label>Tipo de movimiento</label>
       <div class="chips" id="mov-tipo-group">
         <button class="chip active" onclick="selMovTipo('asignacion',this)">Asignación</button>
         <button class="chip" onclick="selMovTipo('devolucion',this)">Devolución (→ bodega)</button>
         <button class="chip" onclick="selMovTipo('mantencion',this)">Mantención</button>
-        <button class="chip" onclick="selMovTipo('baja',this)">Baja</button>
+        <button class="chip" onclick="selMovTipo('baja',this)">❌ Baja</button>
       </div>
     </div>
+
+    <!-- Funcionario (solo asignación) -->
     <div class="form-group" id="funcionario-group" style="margin-bottom:16px">
       <label>Funcionario</label>
       <select class="form-control" id="mov-funcionario"><option value="">Seleccionar...</option></select>
     </div>
-    <div class="form-group" style="margin-bottom:16px">
+
+    <!-- Observación (no baja) -->
+    <div class="form-group" id="obs-group" style="margin-bottom:16px">
       <label>Observación</label>
       <input class="form-control" id="mov-obs" placeholder="Notas adicionales...">
     </div>
+
+    <!-- SECCIÓN BAJA -->
+    <div id="baja-group" style="display:none">
+      <div style="background:var(--danger)12;border:1px solid var(--danger)30;border-radius:var(--r);padding:14px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--danger);margin-bottom:4px">⚠️ Esta acción es irreversible</div>
+        <div style="font-size:12px;color:var(--text2)">El equipo quedará dado de baja. Debe seleccionar un motivo.</div>
+      </div>
+
+      <!-- Tipo de baja -->
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Motivo de baja</label>
+        <div class="chips" id="tipo-baja-group">
+          <button class="chip active" onclick="selTipoBaja('regalo',this)">🎁 Regalo</button>
+          <button class="chip" onclick="selTipoBaja('desecho',this)">📋 Desecho</button>
+          <button class="chip" onclick="selTipoBaja('robo',this)">🛠️ Robo/Pérdida</button>
+          <button class="chip" onclick="selTipoBaja('obsoleto',this)">🔧 Obsoleto</button>
+          <button class="chip" onclick="selTipoBaja('otro',this)">❓ Otro</button>
+        </div>
+      </div>
+
+      <!-- REGALO -->
+      <div id="baja-regalo" style="margin-bottom:14px">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nombre receptor <span style="color:var(--danger)">*</span></label>
+            <input class="form-control" id="baja-receptor" placeholder="Ej: Juan García">
+          </div>
+          <div class="form-group">
+            <label>Fecha de entrega <span style="color:var(--danger)">*</span></label>
+            <input class="form-control" type="date" id="baja-fecha-regalo">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:10px">
+          <label>Foto/evidencia <span style="color:var(--text2);font-size:11px">(opcional)</span></label>
+          <input type="file" class="form-control" id="baja-archivo-regalo" accept="image/*,.pdf">
+        </div>
+      </div>
+
+      <!-- DESECHO -->
+      <div id="baja-desecho" style="display:none;margin-bottom:14px">
+        <div class="form-group">
+          <label>Comprobante PDF <span style="color:var(--danger)">*</span></label>
+          <input type="file" class="form-control" id="baja-archivo-desecho" accept=".pdf,image/*">
+          <div style="font-size:11px;color:var(--text2);margin-top:4px">Obligatorio: adjunta el comprobante de desecho o reciclaje</div>
+        </div>
+        <div class="form-group" style="margin-top:10px">
+          <label>Descripción <span style="color:var(--text2);font-size:11px">(opcional)</span></label>
+          <input class="form-control" id="baja-desc-desecho" placeholder="Ej: Reciclaje empresa XYZ">
+        </div>
+      </div>
+
+      <!-- ROBO/PÉRDIDA -->
+      <div id="baja-robo" style="display:none;margin-bottom:14px">
+        <div class="form-group">
+          <label>Descripción detallada <span style="color:var(--danger)">*</span></label>
+          <input class="form-control" id="baja-desc-robo" placeholder="Dónde, cuándo, cómo ocurrió...">
+        </div>
+        <div class="form-group" style="margin-top:10px">
+          <label>Reporte/Denuncia <span style="color:var(--danger)">*</span></label>
+          <input type="file" class="form-control" id="baja-archivo-robo" accept=".pdf,image/*">
+          <div style="font-size:11px;color:var(--text2);margin-top:4px">Obligatorio: denuncia policial, reporte RRHH, etc.</div>
+        </div>
+      </div>
+
+      <!-- OBSOLETO -->
+      <div id="baja-obsoleto" style="display:none;margin-bottom:14px">
+        <div class="form-group">
+          <label>Motivo <span style="color:var(--danger)">*</span></label>
+          <input class="form-control" id="baja-desc-obsoleto" placeholder="Ej: Batería muerta, pantalla rota, antigüedad...">
+        </div>
+        <div class="form-group" style="margin-top:10px">
+          <label>Foto del daño <span style="color:var(--text2);font-size:11px">(opcional)</span></label>
+          <input type="file" class="form-control" id="baja-archivo-obsoleto" accept="image/*,.pdf">
+        </div>
+      </div>
+
+      <!-- OTRO -->
+      <div id="baja-otro" style="display:none;margin-bottom:14px">
+        <div class="form-group">
+          <label>Descripción <span style="color:var(--danger)">*</span></label>
+          <input class="form-control" id="baja-desc-otro" placeholder="Describe el motivo de la baja...">
+        </div>
+        <div class="form-group" style="margin-top:10px">
+          <label>Archivo <span style="color:var(--text2);font-size:11px">(opcional)</span></label>
+          <input type="file" class="form-control" id="baja-archivo-otro" accept=".pdf,image/*,.doc,.docx">
+        </div>
+      </div>
+
+    </div><!-- /baja-group -->
+
     <div id="mov-alert"></div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-mov')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarMovimiento()">Registrar</button>
+      <button class="btn btn-primary" id="mov-btn-registrar" onclick="guardarMovimiento()">Registrar</button>
     </div>
   </div>
 </div>
@@ -1123,22 +1221,107 @@ function abrirMovimiento(id, imei1, modelo) {
   document.getElementById('modal-mov').classList.add('open');
 }
 
+let tipoBaja = 'regalo';
+
 function selMovTipo(tipo, el) {
   movTipo = tipo;
   document.querySelectorAll('#mov-tipo-group .chip').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('funcionario-group').style.display = tipo==='asignacion'?'block':'none';
+  document.getElementById('funcionario-group').style.display = tipo==='asignacion' ? 'block' : 'none';
+  document.getElementById('obs-group').style.display = tipo==='baja' ? 'none' : 'block';
+  document.getElementById('baja-group').style.display = tipo==='baja' ? 'block' : 'none';
+  document.getElementById('mov-btn-registrar').textContent = tipo==='baja' ? '❌ Confirmar baja' : 'Registrar';
+  document.getElementById('mov-btn-registrar').className = tipo==='baja' ? 'btn btn-danger' : 'btn btn-primary';
+  if (tipo==='baja') selTipoBaja('regalo', document.querySelector('#tipo-baja-group .chip'));
+}
+
+function selTipoBaja(tipo, el) {
+  tipoBaja = tipo;
+  document.querySelectorAll('#tipo-baja-group .chip').forEach(b => b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  ['regalo','desecho','robo','obsoleto','otro'].forEach(t => {
+    document.getElementById(`baja-${t}`).style.display = t===tipo ? 'block' : 'none';
+  });
 }
 
 async function guardarMovimiento() {
-  const funcionarioId = document.getElementById('mov-funcionario').value;
-  const observacion = document.getElementById('mov-obs').value;
-  if (movTipo==='asignacion'&&!funcionarioId) { showAlert('mov-alert','Selecciona un funcionario','error'); return; }
-  const r = await api('/asignaciones',{method:'POST',body:JSON.stringify({equipo_id:currentEquipoId, funcionario_id:funcionarioId||null, tipo:movTipo, observacion})});
-  if (!r) return;
-  const data = await r.json();
-  if (!r.ok) { showAlert('mov-alert',data.error,'error'); return; }
-  closeModal('modal-mov'); buscarEquipos();
+  showAlert('mov-alert','','');
+
+  // Movimientos normales
+  if (movTipo !== 'baja') {
+    const funcionarioId = document.getElementById('mov-funcionario').value;
+    const observacion = document.getElementById('mov-obs').value;
+    if (movTipo==='asignacion' && !funcionarioId) { showAlert('mov-alert','Selecciona un funcionario','error'); return; }
+    const r = await api('/asignaciones',{method:'POST',body:JSON.stringify({equipo_id:currentEquipoId, funcionario_id:funcionarioId||null, tipo:movTipo, observacion})});
+    if (!r) return;
+    const data = await r.json();
+    if (!r.ok) { showAlert('mov-alert',data.error,'error'); return; }
+    closeModal('modal-mov'); buscarEquipos();
+    return;
+  }
+
+  // === BAJA ===
+  const fd = new FormData();
+  fd.append('equipo_id', currentEquipoId);
+  fd.append('tipo_baja', tipoBaja);
+
+  if (tipoBaja === 'regalo') {
+    const receptor = document.getElementById('baja-receptor').value.trim();
+    const fecha = document.getElementById('baja-fecha-regalo').value;
+    if (!receptor) { showAlert('mov-alert','El nombre del receptor es obligatorio','error'); return; }
+    if (!fecha) { showAlert('mov-alert','La fecha de entrega es obligatoria','error'); return; }
+    fd.append('nombre_receptor', receptor);
+    fd.append('fecha_regalo', fecha);
+    const arch = document.getElementById('baja-archivo-regalo').files[0];
+    if (arch) fd.append('archivo', arch);
+  }
+  else if (tipoBaja === 'desecho') {
+    const arch = document.getElementById('baja-archivo-desecho').files[0];
+    if (!arch) { showAlert('mov-alert','El comprobante es obligatorio para desecho','error'); return; }
+    fd.append('archivo', arch);
+    const desc = document.getElementById('baja-desc-desecho').value.trim();
+    if (desc) fd.append('descripcion', desc);
+  }
+  else if (tipoBaja === 'robo') {
+    const desc = document.getElementById('baja-desc-robo').value.trim();
+    const arch = document.getElementById('baja-archivo-robo').files[0];
+    if (!desc) { showAlert('mov-alert','La descripción es obligatoria para robo/pérdida','error'); return; }
+    if (!arch) { showAlert('mov-alert','El reporte/denuncia es obligatorio','error'); return; }
+    fd.append('descripcion', desc);
+    fd.append('archivo', arch);
+  }
+  else if (tipoBaja === 'obsoleto') {
+    const desc = document.getElementById('baja-desc-obsoleto').value.trim();
+    if (!desc) { showAlert('mov-alert','El motivo es obligatorio','error'); return; }
+    fd.append('descripcion', desc);
+    const arch = document.getElementById('baja-archivo-obsoleto').files[0];
+    if (arch) fd.append('archivo', arch);
+  }
+  else if (tipoBaja === 'otro') {
+    const desc = document.getElementById('baja-desc-otro').value.trim();
+    if (!desc) { showAlert('mov-alert','La descripción es obligatoria','error'); return; }
+    fd.append('descripcion', desc);
+    const arch = document.getElementById('baja-archivo-otro').files[0];
+    if (arch) fd.append('archivo', arch);
+  }
+
+  try {
+    showAlert('mov-alert','⏳ Procesando baja...','info');
+    document.getElementById('mov-btn-registrar').disabled = true;
+    const r = await fetch(`${API}/api/bajas`, {
+      method: 'POST',
+      headers: {'Authorization': `Bearer ${token}`},
+      body: fd
+    });
+    const data = await r.json();
+    if (!r.ok) { showAlert('mov-alert', data.error, 'error'); return; }
+    closeModal('modal-mov');
+    buscarEquipos();
+  } catch(e) {
+    showAlert('mov-alert','Error al procesar baja','error');
+  } finally {
+    document.getElementById('mov-btn-registrar').disabled = false;
+  }
 }
 
 // AUDITORÍA
