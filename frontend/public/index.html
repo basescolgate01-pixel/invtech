@@ -1540,40 +1540,6 @@ async function confirmarSubidaEvidencia(input) {
 }
 
 // ACTUALIZAR ARCHIVO DE EVIDENCIA (para registros sin archivo_data)
-let _evidenciaIdParaSubir = null;
-function solicitarArchivoEvidencia(evidenciaId) {
-  _evidenciaIdParaSubir = evidenciaId;
-  document.getElementById('evidencia-file-input').value = '';
-  document.getElementById('evidencia-file-input').click();
-}
-
-async function confirmarSubidaEvidencia(input) {
-  const file = input.files[0];
-  if (!file || !_evidenciaIdParaSubir) return;
-  const alertEl = document.getElementById('evidencia-upload-alert');
-  alertEl.innerHTML = '<div class="alert alert-info">⏳ Subiendo archivo...</div>';
-  const fd = new FormData();
-  fd.append('archivo', file);
-  try {
-    const r = await fetch(`${API}/api/bajas/archivo/${_evidenciaIdParaSubir}`, {
-      method: 'PUT',
-      headers: {'Authorization': `Bearer ${token}`},
-      body: fd
-    });
-    const data = await r.json();
-    if (!r.ok) { alertEl.innerHTML = `<div class="alert alert-error">❌ ${data.error}</div>`; return; }
-    alertEl.innerHTML = '<div class="alert alert-success">✅ Archivo actualizado correctamente</div>';
-    const infoEl = document.getElementById('evidencia-equipo-info');
-    const equipoId = infoEl.dataset.equipoId;
-    if (equipoId) {
-      const imei = infoEl.textContent.match(/IMEI: (.+)/)?.[1] || '';
-      verEvidenciaBaja(equipoId, imei, '');
-    }
-    setTimeout(() => { alertEl.innerHTML = ''; }, 3000);
-  } catch(e) {
-    alertEl.innerHTML = '<div class="alert alert-error">❌ Error de conexión</div>';
-  }
-}
 
 // TABLA REGISTROS DE BAJA (auditoría)
 async function cargarRegistrosBaja() {
