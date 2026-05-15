@@ -47,20 +47,23 @@ router.get('/', auth, async (req, res) => {
 router.get('/stats/resumen', auth, async (req, res) => {
   try {
     const kpis = await pool.query(`
-      SELECT COUNT(*) as total,
+      SELECT COUNT(*) FILTER (WHERE estado != 'baja') as total,
         COUNT(*) FILTER (WHERE estado = 'asignado') as asignados,
         COUNT(*) FILTER (WHERE estado = 'disponible') as disponibles,
-        COUNT(*) FILTER (WHERE estado = 'mantencion') as mantencion, COUNT(*) FILTER (WHERE estado = 'baja') as baja
+        COUNT(*) FILTER (WHERE estado = 'mantencion') as mantencion,
+        COUNT(*) FILTER (WHERE estado = 'baja') as baja
       FROM equipos
     `);
     const porArea = await pool.query(`
       SELECT COALESCE(a.nombre, 'Sin área') as area, COUNT(e.id) as cantidad
       FROM equipos e LEFT JOIN areas a ON e.area_id = a.id
+      WHERE e.estado != 'baja'
       GROUP BY a.nombre ORDER BY cantidad DESC
     `);
     const porTipo = await pool.query(`
       SELECT COALESCE(t.icono,'📱') as icono, COALESCE(t.nombre,'Sin tipo') as tipo, COUNT(e.id) as cantidad
       FROM equipos e LEFT JOIN tipos_equipo t ON e.tipo_id = t.id
+      WHERE e.estado != 'baja'
       GROUP BY t.nombre, t.icono ORDER BY cantidad DESC
     `);
     res.json({ kpis: kpis.rows[0], por_area: porArea.rows, por_tipo: porTipo.rows });
