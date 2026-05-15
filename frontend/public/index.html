@@ -1468,20 +1468,47 @@ async function verEvidenciaBaja(equipoId, imei1, modelo) {
       </div>
       ${ev.tipo_baja==='regalo'?`<div style="font-size:13px;margin-bottom:4px">👤 Receptor: <strong>${ev.nombre_receptor}</strong></div><div style="font-size:12px;color:var(--text2)">📅 Fecha entrega: ${ev.fecha_regalo||'-'}</div>`:''}
       ${ev.descripcion?`<div style="font-size:12px;color:var(--text2);margin-top:4px">📝 ${ev.descripcion}</div>`:''}
-      ${ev.archivo_nombre?`
-        <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:6px;padding:8px 12px">
-          <span style="font-size:12px">${archivoIcono(ev.archivo_tipo)} ${ev.archivo_nombre} <span style="color:var(--text2)">(${formatBytes(ev.archivo_tamano)})</span></span>
-          <button class="btn btn-secondary btn-sm" onclick="descargarEvidencia(${ev.id},'${ev.archivo_nombre}')">⬇️ Descargar</button>
-        </div>`:'<div style="font-size:12px;color:var(--text2);margin-top:6px">Sin archivo adjunto</div>'}
+      ${ev.archivo_nombre
+        ? `<div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:6px;padding:8px 12px">
+            <span style="font-size:12px">${archivoIcono(ev.archivo_tipo)} ${ev.archivo_nombre} <span style="color:var(--text2)">(${formatBytes(ev.archivo_tamano)})</span></span>
+            ${ev.archivo_disponible
+              ? `<button class="btn btn-secondary btn-sm" onclick="descargarEvidencia(${ev.id},'${ev.archivo_nombre}')">⬇️ Descargar</button>`
+              : `<span style="font-size:11px;color:var(--text2)">⚠️ No disponible</span>`
+            }
+           </div>`
+        : '<div style="font-size:12px;color:var(--text2);margin-top:6px">Sin archivo adjunto</div>'}
     </div>`).join('');
 }
 
 // DESCARGAR ARCHIVO DE EVIDENCIA
 async function descargarEvidencia(evidenciaId, nombre) {
-  const r = await fetch(`${API}/api/bajas/archivo/${evidenciaId}`, {headers:{'Authorization':`Bearer ${token}`}});
-  if (!r.ok) { alert('No se pudo descargar el archivo'); return; }
-  const blob = await r.blob();
-  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nombre; a.click();
+  try {
+    const r = await fetch(`${API}/api/bajas/archivo/${evidenciaId}`, {headers:{'Authorization':`Bearer ${token}`}});
+    if (!r.ok) {
+      let msg = 'No se pudo descargar el archivo';
+      try {
+        const data = await r.json();
+        if (data.error === 'Sin archivo adjunto') {
+          msg = 'Este registro fue creado antes de la migración al nuevo sistema de almacenamiento y su archivo ya no está disponible.';
+        } else {
+          msg = data.error || msg;
+        }
+      } catch(e) {}
+      alert(msg);
+      return;
+    }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombre;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch(e) {
+    alert('Error de conexión al descargar el archivo');
+  }
 }
 
 // TABLA REGISTROS DE BAJA (auditoría)
@@ -1511,9 +1538,11 @@ async function cargarRegistrosBaja() {
       ${b.tipo_baja==='regalo'?`👤 ${b.nombre_receptor||'-'} · 📅 ${b.fecha_regalo||'-'}`:b.descripcion||'-'}
     </td>
     <td>
-      ${b.archivo_nombre
+      ${b.archivo_nombre && b.archivo_disponible
         ? `<button class="btn btn-secondary btn-sm" onclick="descargarEvidencia(${b.id},'${b.archivo_nombre}')">${archivoIcono(b.archivo_tipo)} Descargar</button>`
-        : '<span style="color:var(--text2);font-size:12px">Sin archivo</span>'}
+        : b.archivo_nombre
+          ? '<span style="color:var(--text2);font-size:12px">⚠️ No disponible</span>'
+          : '<span style="color:var(--text2);font-size:12px">Sin archivo</span>'}
     </td>
     <td style="font-size:12px;color:var(--text2)">${b.usuario}</td>
   </tr>`).join('');

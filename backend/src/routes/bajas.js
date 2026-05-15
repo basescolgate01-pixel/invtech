@@ -81,7 +81,7 @@ router.post('/', auth, upload.single('archivo'), async (req, res) => {
 });
 
 // GET /api/bajas — listado con filtros
-// ⚠️ ANTES de /:equipo_id para que Express no lo confunda
+// ⚠️ ANTES de /:equipo_id
 router.get('/', auth, async (req, res) => {
   try {
     const { tipo_baja, desde, hasta } = req.query;
@@ -89,6 +89,7 @@ router.get('/', auth, async (req, res) => {
       SELECT e.id, e.tipo_baja, e.nombre_receptor,
              TO_CHAR(e.fecha_regalo, 'DD/MM/YYYY') as fecha_regalo,
              e.descripcion, e.archivo_nombre, e.archivo_tipo, e.archivo_tamano,
+             (e.archivo_data IS NOT NULL) as archivo_disponible,
              TO_CHAR(e.fecha, 'DD/MM/YYYY HH24:MI') as fecha,
              u.nombre as usuario, eq.imei1, eq.modelo, eq.marca
       FROM evidencias_baja e
@@ -108,7 +109,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // GET /api/bajas/export/excel
-// ⚠️ ANTES de /:equipo_id para que Express no lo confunda
+// ⚠️ ANTES de /:equipo_id
 router.get('/export/excel', auth, async (req, res) => {
   try {
     const xlsx = require('xlsx');
@@ -143,7 +144,7 @@ router.get('/export/excel', auth, async (req, res) => {
 });
 
 // GET /api/bajas/archivo/:id — descargar archivo desde DB
-// ⚠️ ANTES de /:equipo_id para que Express no lo confunda
+// ⚠️ ANTES de /:equipo_id
 router.get('/archivo/:id', auth, async (req, res) => {
   try {
     const result = await pool.query(
@@ -165,13 +166,14 @@ router.get('/archivo/:id', auth, async (req, res) => {
 });
 
 // GET /api/bajas/:equipo_id — evidencias de un equipo
-// ⚠️ AL FINAL — ruta más genérica con parámetro dinámico
+// ⚠️ AL FINAL — ruta genérica con parámetro dinámico
 router.get('/:equipo_id', auth, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT e.id, e.tipo_baja, e.nombre_receptor,
               TO_CHAR(e.fecha_regalo, 'DD/MM/YYYY') as fecha_regalo,
               e.descripcion, e.archivo_nombre, e.archivo_tipo, e.archivo_tamano,
+              (e.archivo_data IS NOT NULL) as archivo_disponible,
               TO_CHAR(e.fecha, 'DD/MM/YYYY HH24:MI') as fecha,
               u.nombre as usuario
        FROM evidencias_baja e
