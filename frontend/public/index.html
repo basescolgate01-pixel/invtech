@@ -197,6 +197,7 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
       <button class="nav-item" onclick="showPage('ingresar',this)">➕ Ingresar equipos</button>
       <button class="nav-item" onclick="showPage('scanner',this)">🔍 Escanear</button>
       <button class="nav-item" onclick="showPage('auditoria',this)">📋 Auditoría</button>
+      <button class="nav-item" onclick="showPage('masivo',this)">📊 Mov. masivos</button>
       <button class="nav-item" onclick="showPage('etiquetas',this)">🏷️ Etiquetas</button>
       <button class="nav-item admin-only" onclick="showPage('admin',this)" style="display:none">⚙️ Admin</button>
     </nav>
@@ -412,7 +413,6 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
 
       <div class="tabs">
         <button class="tab active" onclick="switchAudTab('historial',this)">📋 Historial</button>
-        <button class="tab" onclick="switchAudTab('masivo',this)">📊 Movimientos masivos</button>
         <button class="tab" onclick="switchAudTab('bajas',this)">❌ Registros de baja</button>
       </div>
 
@@ -454,29 +454,6 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
       </div>
       </div><!-- /aud-historial -->
 
-      <!-- Movimientos masivos -->
-      <div id="aud-masivo" style="display:none">
-        <div class="card">
-          <div style="font-size:14px;font-weight:600;margin-bottom:4px">Movimientos masivos desde Excel</div>
-          <div style="color:var(--text2);font-size:13px;margin-bottom:16px">Sube un Excel con IMEI, RUT del funcionario, tipo de movimiento y observación</div>
-          <div class="alert alert-info" style="margin-bottom:16px">
-            <strong>Columnas:</strong> imei1, rut, tipo (asignacion / devolucion / mantencion / baja), observacion
-          </div>
-          <div class="btn-group" style="margin-bottom:16px">
-            <button class="btn btn-secondary" onclick="descargarPlantillaMasivo()">⬇️ Descargar plantilla</button>
-          </div>
-          <div class="form-group" style="margin-bottom:16px">
-            <label>Archivo Excel (.xlsx)</label>
-            <input type="file" id="masivo-mov-file" accept=".xlsx,.xls" class="form-control"
-              onchange="document.getElementById('masivo-mov-btn').style.display='inline-flex';document.getElementById('masivo-mov-preview').textContent='📄 '+this.files[0].name">
-          </div>
-          <div id="masivo-mov-preview" style="color:var(--text2);font-size:13px;margin-bottom:12px"></div>
-          <div id="masivo-mov-alert"></div>
-          <button class="btn btn-primary" id="masivo-mov-btn" style="display:none" onclick="subirMovimientosMasivos()">📊 Procesar movimientos</button>
-        </div>
-        <div id="masivo-mov-resultado" style="display:none;margin-top:16px"></div>
-      </div>
-
       <!-- REGISTROS DE BAJA -->
       <div id="aud-bajas" style="display:none">
         <div class="card" style="margin-bottom:16px">
@@ -510,6 +487,30 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
         </div>
       </div>
 
+    </div>
+
+    <!-- MOVIMIENTOS MASIVOS -->
+    <div class="page" id="page-masivo">
+      <div class="page-header"><div class="page-title">Movimientos masivos</div><div class="page-sub">Registra asignaciones, devoluciones, mantenciones y bajas desde Excel</div></div>
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Cargar movimientos desde Excel</div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:16px">Sube un Excel con IMEI, RUT del funcionario, tipo de movimiento y observación</div>
+        <div class="alert alert-info" style="margin-bottom:16px">
+          <strong>Columnas:</strong> imei1, rut, tipo (asignacion / devolucion / mantencion / baja), observacion
+        </div>
+        <div class="btn-group" style="margin-bottom:16px">
+          <button class="btn btn-secondary" onclick="descargarPlantillaMasivo()">⬇️ Descargar plantilla</button>
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Archivo Excel (.xlsx)</label>
+          <input type="file" id="masivo-mov-file" accept=".xlsx,.xls" class="form-control"
+            onchange="document.getElementById('masivo-mov-btn').style.display='inline-flex';document.getElementById('masivo-mov-preview').textContent='📄 '+this.files[0].name">
+        </div>
+        <div id="masivo-mov-preview" style="color:var(--text2);font-size:13px;margin-bottom:12px"></div>
+        <div id="masivo-mov-alert"></div>
+        <button class="btn btn-primary" id="masivo-mov-btn" style="display:none" onclick="subirMovimientosMasivos()">📊 Procesar movimientos</button>
+      </div>
+      <div id="masivo-mov-resultado" style="display:none;margin-top:16px"></div>
     </div>
 
     <!-- ETIQUETAS -->
@@ -1428,7 +1429,6 @@ async function exportarExcel() {
 // AUDITORÍA TABS
 function switchAudTab(tab, el) {
   document.getElementById('aud-historial').style.display = tab==='historial' ? 'block' : 'none';
-  document.getElementById('aud-masivo').style.display = tab==='masivo' ? 'block' : 'none';
   document.getElementById('aud-bajas').style.display = tab==='bajas' ? 'block' : 'none';
   document.querySelectorAll('#page-auditoria .tabs .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
@@ -1475,15 +1475,14 @@ async function verEvidenciaBaja(equipoId, imei1, modelo) {
       </div>
       ${ev.tipo_baja==='regalo'?`<div style="font-size:13px;margin-bottom:4px">👤 Receptor: <strong>${ev.nombre_receptor}</strong></div><div style="font-size:12px;color:var(--text2)">📅 Fecha entrega: ${ev.fecha_regalo||'-'}</div>`:''}
       ${ev.descripcion?`<div style="font-size:12px;color:var(--text2);margin-top:4px">📝 ${ev.descripcion}</div>`:''}
-      ${ev.archivo_nombre
-        ? `<div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:6px;padding:8px 12px">
-            <span style="font-size:12px">${archivoIcono(ev.archivo_tipo)} ${ev.archivo_nombre} <span style="color:var(--text2)">(${formatBytes(ev.archivo_tamano)})</span></span>
-            ${ev.archivo_disponible
-              ? `<button class="btn btn-secondary btn-sm" onclick="descargarEvidencia(${ev.id},'${ev.archivo_nombre}')">⬇️ Descargar</button>`
-              : `<button class="btn btn-primary btn-sm" onclick="solicitarArchivoEvidencia(${ev.id})">📎 Actualizar archivo</button>`
-            }
-           </div>`
-        : '<div style="font-size:12px;color:var(--text2);margin-top:6px">Sin archivo adjunto</div>'}
+      ${ev.archivo_nombre?`
+        <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:6px;padding:8px 12px">
+          <span style="font-size:12px">${archivoIcono(ev.archivo_tipo)} ${ev.archivo_nombre} <span style="color:var(--text2)">(${formatBytes(ev.archivo_tamano)})</span></span>
+          ${ev.archivo_disponible
+            ? `<button class="btn btn-secondary btn-sm" onclick="descargarEvidencia(${ev.id},'${ev.archivo_nombre}')">⬇️ Descargar</button>`
+            : `<button class="btn btn-primary btn-sm" onclick="solicitarArchivoEvidencia(${ev.id})">📎 Actualizar archivo</button>`
+          }
+        </div>`:'<div style="font-size:12px;color:var(--text2);margin-top:6px">Sin archivo adjunto</div>'}
     </div>`).join('');
 }
 
@@ -1493,28 +1492,50 @@ async function descargarEvidencia(evidenciaId, nombre) {
     const r = await fetch(`${API}/api/bajas/archivo/${evidenciaId}`, {headers:{'Authorization':`Bearer ${token}`}});
     if (!r.ok) {
       let msg = 'No se pudo descargar el archivo';
-      try {
-        const data = await r.json();
-        if (data.error === 'Sin archivo adjunto') {
-          msg = 'Este registro fue creado antes de la migración al nuevo sistema de almacenamiento y su archivo ya no está disponible.';
-        } else {
-          msg = data.error || msg;
-        }
-      } catch(e) {}
-      alert(msg);
-      return;
+      try { const d = await r.json(); msg = d.error || msg; } catch(e) {}
+      alert(msg); return;
     }
     const blob = await r.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = nombre;
-    document.body.appendChild(a);
-    a.click();
+    a.href = url; a.download = nombre;
+    document.body.appendChild(a); a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch(e) { alert('Error de conexión al descargar'); }
+}
+
+// ACTUALIZAR ARCHIVO DE EVIDENCIA (para registros sin archivo_data)
+let _evidenciaIdParaSubir = null;
+function solicitarArchivoEvidencia(evidenciaId) {
+  _evidenciaIdParaSubir = evidenciaId;
+  document.getElementById('evidencia-file-input').value = '';
+  document.getElementById('evidencia-file-input').click();
+}
+
+async function confirmarSubidaEvidencia(input) {
+  const file = input.files[0];
+  if (!file || !_evidenciaIdParaSubir) return;
+  const alertEl = document.getElementById('evidencia-upload-alert');
+  alertEl.innerHTML = '<div class="alert alert-info">⏳ Subiendo archivo...</div>';
+  const fd = new FormData();
+  fd.append('archivo', file);
+  try {
+    const r = await fetch(`${API}/api/bajas/archivo/${_evidenciaIdParaSubir}`, {
+      method: 'PUT',
+      headers: {'Authorization': `Bearer ${token}`},
+      body: fd
+    });
+    const data = await r.json();
+    if (!r.ok) { alertEl.innerHTML = `<div class="alert alert-error">❌ ${data.error}</div>`; return; }
+    alertEl.innerHTML = '<div class="alert alert-success">✅ Archivo actualizado correctamente</div>';
+    // Recargar evidencias del mismo equipo
+    const infoEl = document.getElementById('evidencia-equipo-info');
+    const match = infoEl.dataset.equipoId;
+    if (match) verEvidenciaBaja(match, '', '');
+    setTimeout(() => { alertEl.innerHTML = ''; }, 3000);
   } catch(e) {
-    alert('Error de conexión al descargar el archivo');
+    alertEl.innerHTML = '<div class="alert alert-error">❌ Error de conexión</div>';
   }
 }
 
