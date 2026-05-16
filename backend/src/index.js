@@ -13,6 +13,7 @@ app.use('/api/funcionarios', require('./routes/funcionarios'));
 app.use('/api/usuarios', require('./routes/usuarios'));
 app.use('/api/tipos', require('./routes/tipos'));
 app.use('/api/bajas', require('./routes/bajas'));
+app.use('/api/areas', require('./routes/areas'));
 
 app.use(express.static(path.join(__dirname, '../../frontend/public')));
 app.get('*', (req, res) => {
