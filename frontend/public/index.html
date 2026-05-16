@@ -638,7 +638,10 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
       <div id="admin-usuarios">
         <div class="flex-between" style="margin-bottom:16px">
           <div style="font-size:14px;font-weight:600">Usuarios del sistema</div>
-          <button class="btn btn-primary" onclick="abrirModalUsuario()">➕ Nuevo usuario</button>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="abrirModalUsuario()">➕ Nuevo usuario</button>
+            <button class="btn btn-secondary" onclick="abrirModalUsuariosMasivo()">📊 Carga masiva</button>
+          </div>
         </div>
         <div class="card">
           <div class="table-wrap">
@@ -949,6 +952,41 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
   </div>
 </div>
 
+<!-- MODAL USUARIOS MASIVO -->
+<div class="modal" id="modal-usuarios-masivo">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">📊 Carga masiva de usuarios</div>
+      <button class="modal-close" onclick="closeModal('modal-usuarios-masivo')">✕</button>
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px">
+        Sube un archivo Excel (.xlsx) con las columnas: <strong>nombre, email, password, rol, area</strong>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn btn-secondary btn-sm" onclick="descargarPlantillaUsuarios()">⬇️ Descargar plantilla</button>
+      </div>
+      <input type="file" id="usuarios-excel-file" accept=".xlsx,.xls" class="form-control" 
+        onchange="previewUsuariosExcel()">
+    </div>
+    <div id="usuarios-masivo-preview" style="display:none;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Vista previa:</div>
+      <div class="table-wrap" style="max-height:200px">
+        <table>
+          <thead><tr><th>NOMBRE</th><th>EMAIL</th><th>ROL</th><th>ÁREA</th></tr></thead>
+          <tbody id="usuarios-masivo-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="usuarios-masivo-alert"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-usuarios-masivo')">Cancelar</button>
+      <button class="btn btn-primary" id="usuarios-excel-upload-btn" style="display:none" 
+        onclick="subirUsuariosMasivo()">⬆️ Subir usuarios</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL EDITAR EQUIPO -->
 <div class="modal" id="modal-equipo">
   <div class="modal-box">
@@ -1031,6 +1069,7 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
     </div>
   </div>
 </div>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
 const API = '';
@@ -1788,6 +1827,104 @@ function imprimirEtiquetas() {
 }
 
 // ADMIN - USUARIOS
+// ══════════════════════════════════════════════════════
+// USUARIOS MASIVO
+// ══════════════════════════════════════════════════════
+
+function abrirModalUsuariosMasivo() {
+  document.getElementById('usuarios-excel-file').value = '';
+  document.getElementById('usuarios-masivo-preview').style.display = 'none';
+  document.getElementById('usuarios-excel-upload-btn').style.display = 'none';
+  document.getElementById('usuarios-masivo-alert').innerHTML = '';
+  document.getElementById('modal-usuarios-masivo').classList.add('open');
+}
+
+function descargarPlantillaUsuarios() {
+  window.open(`${API}/api/usuarios/plantilla`, '_blank');
+}
+
+async function previewUsuariosExcel() {
+  const file = document.getElementById('usuarios-excel-file').files[0];
+  if (!file) return;
+
+  try {
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const filas = XLSX.utils.sheet_to_json(ws);
+
+    if (!filas.length) {
+      showAlert('usuarios-masivo-alert', 'El archivo está vacío', 'error');
+      return;
+    }
+
+    // Mostrar preview
+    const tbody = document.getElementById('usuarios-masivo-tbody');
+    tbody.innerHTML = filas.slice(0, 10).map(f => `<tr>
+      <td style="font-size:13px">${f.nombre || '-'}</td>
+      <td style="font-size:12px;color:var(--text2)">${f.email || '-'}</td>
+      <td><span class="badge">${f.rol || '-'}</span></td>
+      <td style="font-size:12px;color:var(--text2)">${f.area || '-'}</td>
+    </tr>`).join('');
+
+    document.getElementById('usuarios-masivo-preview').style.display = 'block';
+    document.getElementById('usuarios-excel-upload-btn').style.display = 'inline-flex';
+    showAlert('usuarios-masivo-alert', `✅ ${filas.length} usuarios listos para importar`, 'success');
+  } catch (err) {
+    showAlert('usuarios-masivo-alert', '❌ Error al leer el archivo Excel', 'error');
+  }
+}
+
+async function subirUsuariosMasivo() {
+  const file = document.getElementById('usuarios-excel-file').files[0];
+  if (!file) {
+    showAlert('usuarios-masivo-alert', 'Selecciona un archivo', 'error');
+    return;
+  }
+
+  showAlert('usuarios-masivo-alert', '⏳ Importando usuarios...', 'info');
+  document.getElementById('usuarios-excel-upload-btn').disabled = true;
+
+  const fd = new FormData();
+  fd.append('archivo', file);
+
+  try {
+    const r = await fetch(`${API}/api/usuarios/importar`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: fd
+    });
+
+    const data = await r.json();
+    document.getElementById('usuarios-excel-upload-btn').disabled = false;
+
+    if (!r.ok) {
+      showAlert('usuarios-masivo-alert', data.error || 'Error al importar', 'error');
+      return;
+    }
+
+    const { resultados } = data;
+    let msg = `✅ ${resultados.exitosos} de ${resultados.total} usuarios creados correctamente`;
+    if (resultados.errores.length > 0) {
+      msg += `\n\n⚠️ Errores (${resultados.errores.length}):\n` + 
+             resultados.errores.slice(0, 5).join('\n');
+      if (resultados.errores.length > 5) {
+        msg += `\n... y ${resultados.errores.length - 5} errores más`;
+      }
+    }
+
+    showAlert('usuarios-masivo-alert', msg, resultados.errores.length ? 'warning' : 'success');
+    
+    if (resultados.exitosos > 0) {
+      cargarUsuarios();
+      setTimeout(() => closeModal('modal-usuarios-masivo'), 2000);
+    }
+  } catch (err) {
+    document.getElementById('usuarios-excel-upload-btn').disabled = false;
+    showAlert('usuarios-masivo-alert', '❌ Error de conexión', 'error');
+  }
+}
+
 async function cargarUsuarios() {
   const r = await api('/usuarios'); if (!r) return;
   const usuarios = await r.json();

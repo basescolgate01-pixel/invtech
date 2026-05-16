@@ -117,3 +117,131 @@ router.delete('/:id', auth, soloAdmin, async (req, res) => {
 });
 
 module.exports = router;
+
+// GET /api/usuarios/plantilla - descargar plantilla Excel
+router.get('/plantilla', auth, soloAdmin, (req, res) => {
+  const xlsx = require('xlsx');
+  const wb = xlsx.utils.book_new();
+  const ws = xlsx.utils.aoa_to_sheet([
+    ['nombre', 'email', 'password', 'rol', 'area'],
+    ['Juan Pérez', 'juan@empresa.cl', 'password123', 'supervisor', 'TI'],
+    ['María González', 'maria@empresa.cl', 'password456', 'auditor', ''],
+    ['Pedro Silva', 'pedro@empresa.cl', 'password789', 'admin', ''],
+  ]);
+  ws['!cols'] = [{wch:20},{wch:25},{wch:15},{wch:12},{wch:15}];
+
+  const wsInfo = xlsx.utils.aoa_to_sheet([
+    ['INSTRUCCIONES'],
+    [''],
+    ['Columnas requeridas:'],
+    ['nombre', 'Nombre completo del usuario (obligatorio)'],
+    ['email', 'Email único (obligatorio)'],
+    ['password', 'Contraseña mínimo 6 caracteres (obligatorio)'],
+    ['rol', 'admin, auditor o supervisor (obligatorio)'],
+    ['area', 'Nombre del área (obligatorio solo para supervisor)'],
+    [''],
+    ['Roles disponibles:'],
+    ['admin', 'Administrador - acceso total'],
+    ['auditor', 'Auditor - puede registrar movimientos y dar de baja con evidencia'],
+    ['supervisor', 'Supervisor - solo visualiza equipos de su área (requiere área)'],
+  ]);
+
+  xlsx.utils.book_append_sheet(wb, ws, 'Usuarios');
+  xlsx.utils.book_append_sheet(wb, wsInfo, 'Instrucciones');
+
+  const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  res.setHeader('Content-Disposition', 'attachment; filename=plantilla_usuarios.xlsx');
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.send(buffer);
+});
+
+// POST /api/usuarios/importar - carga masiva desde Excel
+router.post('/importar', auth, soloAdmin, async (req, res) => {
+  const multer = require('multer');
+  const upload = multer({ storage: multer.memoryStorage() });
+  
+  upload.single('archivo')(req, res, async (err) => {
+    if (err) return res.status(400).json({ error: 'Error al subir archivo' });
+    if (!req.file) return res.status(400).json({ error: 'Archivo requerido' });
+
+    try {
+      const xlsx = require('xlsx');
+      const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+      const filas = xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+      
+      if (!filas.length) return res.status(400).json({ error: 'Archivo vacío' });
+
+      const rolesValidos = ['admin', 'auditor', 'supervisor'];
+      const resultados = { exitosos: 0, errores: [], total: filas.length };
+
+      for (const fila of filas) {
+        const nombre = String(fila['nombre'] || fila['NOMBRE'] || '').trim();
+        const email = String(fila['email'] || fila['EMAIL'] || '').trim().toLowerCase();
+        const password = String(fila['password'] || fila['PASSWORD'] || fila['contraseña'] || '').trim();
+        const rol = String(fila['rol'] || fila['ROL'] || '').trim().toLowerCase();
+        const areaNombre = String(fila['area'] || fila['AREA'] || fila['área'] || '').trim();
+
+        // Validaciones
+        if (!nombre || !email || !password || !rol) {
+          resultados.errores.push(`Fila ${resultados.exitosos + resultados.errores.length + 1}: faltan campos obligatorios`);
+          continue;
+        }
+
+        if (!rolesValidos.includes(rol)) {
+          resultados.errores.push(`Email ${email}: rol inválido "${rol}"`);
+          continue;
+        }
+
+        if (password.length < 6) {
+          resultados.errores.push(`Email ${email}: contraseña debe tener al menos 6 caracteres`);
+          continue;
+        }
+
+        if (rol === 'supervisor' && !areaNombre) {
+          resultados.errores.push(`Email ${email}: supervisor requiere área asignada`);
+          continue;
+        }
+
+        try {
+          // Verificar email duplicado
+          const existe = await pool.query('SELECT id FROM usuarios WHERE email = $1', [email]);
+          if (existe.rows.length > 0) {
+            resultados.errores.push(`Email ${email}: ya existe`);
+            continue;
+          }
+
+          // Buscar área por nombre
+          let area_id = null;
+          if (areaNombre) {
+            const areaResult = await pool.query(
+              'SELECT id FROM areas WHERE nombre ILIKE $1 LIMIT 1',
+              [areaNombre]
+            );
+            if (!areaResult.rows.length) {
+              resultados.errores.push(`Email ${email}: área "${areaNombre}" no encontrada`);
+              continue;
+            }
+            area_id = areaResult.rows[0].id;
+          }
+
+          // Crear usuario
+          const hash = await bcrypt.hash(password, 10);
+          await pool.query(
+            `INSERT INTO usuarios (nombre, email, password, rol, area_id)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [nombre, email, hash, rol, area_id]
+          );
+
+          resultados.exitosos++;
+        } catch (e) {
+          resultados.errores.push(`Email ${email}: ${e.message}`);
+        }
+      }
+
+      res.json({ ok: true, resultados });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Error al procesar archivo' });
+    }
+  });
+});
