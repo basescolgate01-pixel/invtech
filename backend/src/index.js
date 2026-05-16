@@ -12,10 +12,7 @@ app.use('/api/asignaciones', require('./routes/asignaciones'));
 app.use('/api/funcionarios', require('./routes/funcionarios'));
 app.use('/api/usuarios', require('./routes/usuarios'));
 app.use('/api/tipos', require('./routes/tipos'));
-app.use('/api/bajas', require('./routes/bajas'));
-
-// Servir archivos de evidencias con auth (acceso directo bloqueado)
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/api/areas', require('./routes/areas'));
 
 app.use(express.static(path.join(__dirname, '../../frontend/public')));
 app.get('*', (req, res) => {

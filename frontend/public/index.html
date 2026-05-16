@@ -631,6 +631,7 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
       <div class="tabs">
         <button class="tab active" onclick="switchAdminTab('usuarios',this)">👥 Usuarios</button>
         <button class="tab" onclick="switchAdminTab('funcionarios',this)">🧑‍💼 Funcionarios</button>
+        <button class="tab" onclick="switchAdminTab('areas',this)">📍 Áreas</button>
         <button class="tab" onclick="switchAdminTab('tipos',this)">📦 Tipos de equipo</button>
       </div>
 
@@ -748,6 +749,22 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
             </div>
             <div id="func-excel-alert"></div>
             <button class="btn btn-primary" id="func-excel-upload-btn" style="display:none" onclick="subirExcelFunc()">📊 Importar funcionarios</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Áreas / Supervisores -->
+      <div id="admin-areas" style="display:none">
+        <div class="flex-between" style="margin-bottom:16px">
+          <div style="font-size:14px;font-weight:600">Áreas / Supervisores</div>
+          <button class="btn btn-primary" onclick="abrirModalArea()">➕ Nueva área</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>NOMBRE</th><th>DESCRIPCIÓN</th><th>ACCIONES</th></tr></thead>
+              <tbody id="areas-tbody"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -1020,6 +1037,29 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
   </div>
 </div>
 
+<!-- MODAL ÁREA -->
+<div class="modal" id="modal-area">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-area-title">Nueva área</div>
+      <button class="modal-close" onclick="closeModal('modal-area')">✕</button>
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Nombre del área / supervisor *</label>
+      <input class="form-control" id="area-nombre" placeholder="Ej: Juan Pérez, Bodega Principal">
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Descripción <span style="color:var(--text2);font-size:11px">(opcional)</span></label>
+      <input class="form-control" id="area-desc" placeholder="Ej: Supervisor de TI">
+    </div>
+    <div id="area-alert"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-area')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarArea()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL TIPO EQUIPO -->
 <div class="modal" id="modal-tipo">
   <div class="modal-box" style="max-width:420px">
@@ -1148,6 +1188,7 @@ function initApp() {
   if (usuario.rol !== 'supervisor') {
     cargarFuncionarios();
     cargarTipos();
+    if (usuario.rol === 'admin') cargarAreas();
     addFilasMasivo(3);
     cargarTodosEtiquetas();
   }
@@ -1828,6 +1869,92 @@ function imprimirEtiquetas() {
 
 // ADMIN - USUARIOS
 // ══════════════════════════════════════════════════════
+// ÁREAS
+// ══════════════════════════════════════════════════════
+
+let editingAreaId = null;
+
+async function cargarAreas() {
+  const r = await api('/areas');
+  if (!r || !r.ok) return;
+  const areas = await r.json();
+  
+  const tbody = document.getElementById('areas-tbody');
+  tbody.innerHTML = areas.map(a => `<tr>
+    <td style="font-size:13px;font-weight:500">${a.nombre}</td>
+    <td style="font-size:13px;color:var(--text2)">${a.descripcion || '-'}</td>
+    <td><div class="btn-group">
+      <button class="btn btn-secondary btn-sm" onclick="editarArea(${a.id},'${a.nombre.replace(/'/g,"\'")}','${(a.descripcion||'').replace(/'/g,"\'")}')">✏️ Editar</button>
+      <button class="btn btn-danger btn-sm" onclick="eliminarArea(${a.id},'${a.nombre.replace(/'/g,"\'")}')">🗑️</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function abrirModalArea() {
+  editingAreaId = null;
+  document.getElementById('modal-area-title').textContent = 'Nueva área';
+  document.getElementById('area-nombre').value = '';
+  document.getElementById('area-desc').value = '';
+  document.getElementById('area-alert').innerHTML = '';
+  document.getElementById('modal-area').classList.add('open');
+}
+
+function editarArea(id, nombre, descripcion) {
+  editingAreaId = id;
+  document.getElementById('modal-area-title').textContent = 'Editar área';
+  document.getElementById('area-nombre').value = nombre;
+  document.getElementById('area-desc').value = descripcion || '';
+  document.getElementById('area-alert').innerHTML = '';
+  document.getElementById('modal-area').classList.add('open');
+}
+
+async function guardarArea() {
+  const nombre = document.getElementById('area-nombre').value.trim();
+  const descripcion = document.getElementById('area-desc').value.trim();
+  
+  if (!nombre) {
+    showAlert('area-alert', 'El nombre es obligatorio', 'error');
+    return;
+  }
+
+  const method = editingAreaId ? 'PUT' : 'POST';
+  const url = editingAreaId ? `/areas/${editingAreaId}` : '/areas';
+  
+  const r = await api(url, {
+    method,
+    body: JSON.stringify({ nombre, descripcion })
+  });
+  
+  if (!r) return;
+  const data = await r.json();
+  
+  if (!r.ok) {
+    showAlert('area-alert', data.error || 'Error al guardar', 'error');
+    return;
+  }
+  
+  closeModal('modal-area');
+  cargarAreas();
+  // Recargar select de áreas en usuarios
+  cargarAreasEnSelect('u-area');
+}
+
+async function eliminarArea(id, nombre) {
+  if (!confirm(`¿Eliminar el área "${nombre}"?\n\nLos usuarios y equipos con esta área quedarán sin área asignada.`)) return;
+  
+  const r = await api(`/areas/${id}`, { method: 'DELETE' });
+  if (!r) return;
+  const data = await r.json();
+  
+  if (!r.ok) {
+    alert(data.error || 'Error al eliminar');
+    return;
+  }
+  
+  cargarAreas();
+}
+
+// ══════════════════════════════════════════════════════
 // USUARIOS MASIVO
 // ══════════════════════════════════════════════════════
 
@@ -1947,7 +2074,7 @@ function toggleAreaUsuario() {
 }
 
 async function cargarAreasEnSelect(selectId, selectedId=null) {
-  const r = await api('/funcionarios/areas');
+  const r = await api('/areas');
   if (!r || !r.ok) return;
   const areas = await r.json();
   const sel = document.getElementById(selectId);
@@ -2149,7 +2276,7 @@ async function guardarTipo() {
 
 // ADMIN TABS
 function switchAdminTab(tab, el) {
-  ['admin-usuarios','admin-funcionarios','admin-tipos'].forEach(t => document.getElementById(t).style.display='none');
+  ['admin-usuarios','admin-funcionarios','admin-areas','admin-tipos'].forEach(t => document.getElementById(t).style.display='none');
   document.getElementById('admin-'+tab).style.display = 'block';
   document.querySelectorAll('#page-admin .tabs:first-of-type .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
