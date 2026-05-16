@@ -194,11 +194,11 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
     <nav class="sb-nav">
       <button class="nav-item active" onclick="showPage('dashboard',this)">📊 Dashboard</button>
       <button class="nav-item" onclick="showPage('equipos',this)">📱 Equipos</button>
-      <button class="nav-item" onclick="showPage('ingresar',this)">➕ Ingresar equipos</button>
-      <button class="nav-item" onclick="showPage('scanner',this)">🔍 Escanear</button>
-      <button class="nav-item" onclick="showPage('auditoria',this)">📋 Auditoría</button>
-      <button class="nav-item" onclick="showPage('masivo',this)">📊 Mov. masivos</button>
-      <button class="nav-item" onclick="showPage('etiquetas',this)">🏷️ Etiquetas</button>
+      <button class="nav-item no-supervisor" onclick="showPage('ingresar',this)" style="display:none">➕ Ingresar equipos</button>
+      <button class="nav-item no-supervisor" onclick="showPage('scanner',this)" style="display:none">🔍 Escanear</button>
+      <button class="nav-item no-supervisor" onclick="showPage('auditoria',this)" style="display:none">📋 Auditoría</button>
+      <button class="nav-item no-supervisor" onclick="showPage('masivo',this)" style="display:none">📊 Mov. masivos</button>
+      <button class="nav-item no-supervisor" onclick="showPage('etiquetas',this)" style="display:none">🏷️ Etiquetas</button>
       <button class="nav-item admin-only" onclick="showPage('admin',this)" style="display:none">⚙️ Admin</button>
     </nav>
     <div class="sb-footer">
@@ -229,7 +229,8 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
         <div class="kpi"><div class="kpi-bar" style="background:var(--secondary)"></div><div class="kpi-label">Asignados</div><div class="kpi-val" id="kpi-asignados">-</div></div>
         <div class="kpi"><div class="kpi-bar" style="background:#8b83ff"></div><div class="kpi-label">En bodega</div><div class="kpi-val" id="kpi-disponibles">-</div></div>
         <div class="kpi"><div class="kpi-bar" style="background:var(--warning)"></div><div class="kpi-label">En mantención</div><div class="kpi-val" id="kpi-mantencion">-</div></div>
-        <div class="kpi"><div class="kpi-bar" style="background:var(--danger)"></div><div class="kpi-label">Dados de baja</div><div class="kpi-val" id="kpi-baja">-</div></div>
+        <div class="kpi no-supervisor" style="display:none"><div class="kpi-bar" style="background:var(--danger)"></div><div class="kpi-label">Bajas reales</div><div class="kpi-val" id="kpi-baja-real">-</div></div>
+        <div class="kpi no-supervisor" style="display:none"><div class="kpi-bar" style="background:#f59e0b"></div><div class="kpi-label">🎁 Regalados</div><div class="kpi-val" id="kpi-regalados">-</div></div>
       </div>
 
       <!-- Segunda fila: Tipos + Áreas -->
@@ -256,6 +257,21 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
           <table>
             <thead><tr><th>FECHA</th><th>TIPO</th><th>IMEI 1</th><th>MODELO</th><th>FUNCIONARIO</th><th>REGISTRADO POR</th></tr></thead>
             <tbody id="dash-movimientos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD SUPERVISOR: tabla de dotación asignada -->
+    <div id="dash-supervisor" style="display:none;margin-top:16px">
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:14px">📋 Mi dotación asignada</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>IMEI 1</th><th>MODELO</th><th>FUNCIONARIO</th><th>RUT</th><th>FECHA ASIG.</th>
+            </tr></thead>
+            <tbody id="dash-sup-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -627,7 +643,7 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
         <div class="card">
           <div class="table-wrap">
             <table>
-              <thead><tr><th>NOMBRE</th><th>EMAIL</th><th>ROL</th><th>ESTADO</th><th>CREADO</th><th>ACCIONES</th></tr></thead>
+              <thead><tr><th>NOMBRE</th><th>EMAIL</th><th>ROL</th><th>ÁREA</th><th>ESTADO</th><th>ACCIONES</th></tr></thead>
               <tbody id="admin-tbody"></tbody>
             </table>
           </div>
@@ -912,12 +928,18 @@ input[type=range]{width:100%;accent-color:var(--primary);margin-bottom:10px}
     <div class="form-grid" style="margin-bottom:14px">
       <div class="form-group"><label>Contraseña *</label><input class="form-control" id="u-password" type="password" placeholder="Mínimo 6 caracteres"></div>
       <div class="form-group"><label>Rol *</label>
-        <select class="form-control" id="u-rol">
-          <option value="operador">Operador</option>
+        <select class="form-control" id="u-rol" onchange="toggleAreaUsuario()">
+          <option value="supervisor">Supervisor</option>
           <option value="auditor">Auditor</option>
           <option value="admin">Administrador</option>
         </select>
       </div>
+    </div>
+    <div class="form-group" id="u-area-group" style="display:none;margin-bottom:14px">
+      <label>Área asignada <span style="color:var(--danger)">*</span></label>
+      <select class="form-control" id="u-area">
+        <option value="">Seleccionar área...</option>
+      </select>
     </div>
     <div id="usuario-alert"></div>
     <div class="modal-footer">
@@ -1055,13 +1077,41 @@ function initApp() {
   document.getElementById('app').classList.add('visible');
   document.getElementById('sidebar-name').textContent = usuario.nombre.split(' ')[0];
   document.getElementById('sidebar-avatar').textContent = usuario.nombre[0].toUpperCase();
-  document.getElementById('sidebar-rol').textContent = usuario.rol;
-  if (usuario.rol === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+
+  // Etiqueta de rol en sidebar
+  const rolLabels = { admin:'Administrador', auditor:'Auditor', supervisor:'Supervisor' };
+  document.getElementById('sidebar-rol').textContent = rolLabels[usuario.rol] || usuario.rol;
+
+  // Permisos por rol
+  if (usuario.rol === 'admin') {
+    // Admin ve todo
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+    document.querySelectorAll('.no-supervisor').forEach(el => el.style.display = 'flex');
+  } else if (usuario.rol === 'auditor') {
+    // Auditor ve todo excepto Admin panel
+    document.querySelectorAll('.no-supervisor').forEach(el => el.style.display = 'flex');
+  } else if (usuario.rol === 'supervisor') {
+    // Supervisor: solo dashboard y equipos (su área)
+    document.querySelectorAll('.no-supervisor').forEach(el => el.style.display = 'none');
+    // Ocultar botones de acción en tabla equipos
+    document.querySelectorAll('.accion-mov, .accion-edit, .accion-delete, .accion-baja').forEach(el => el.style.display = 'none');
+  }
+
+  // Ocultar opción de baja sin evidencia para auditor
+  if (usuario.rol === 'auditor') {
+    // El modal de baja para auditor siempre requiere archivo
+    window._bajaRequiereEvidencia = true;
+  } else if (usuario.rol === 'admin') {
+    window._bajaRequiereEvidencia = false;
+  }
+
   cargarDashboard();
-  cargarFuncionarios();
-  cargarTipos();
-  addFilasMasivo(3);
-  cargarTodosEtiquetas();
+  if (usuario.rol !== 'supervisor') {
+    cargarFuncionarios();
+    cargarTipos();
+    addFilasMasivo(3);
+    cargarTodosEtiquetas();
+  }
 }
 
 // NAVIGATION
@@ -1091,8 +1141,28 @@ async function cargarDashboard() {
   document.getElementById('kpi-asignados').textContent = data.kpis.asignados;
   document.getElementById('kpi-disponibles').textContent = data.kpis.disponibles;
   document.getElementById('kpi-mantencion').textContent = data.kpis.mantencion;
-  document.getElementById('kpi-baja').textContent = data.kpis.baja || 0;
+  document.getElementById('kpi-baja-real').textContent = data.kpis.bajas_reales || 0;
+  document.getElementById('kpi-regalados').textContent = data.kpis.regalados || 0;
   document.getElementById('dash-sub').textContent = `Total: ${data.kpis.total} equipos registrados`;
+
+  // Dashboard supervisor: tabla de asignados de su área
+  const divSup = document.getElementById('dash-supervisor');
+  if (divSup) {
+    if (usuario.rol === 'supervisor' && data.asignados_detalle?.length) {
+      divSup.style.display = 'block';
+      const tbody = document.getElementById('dash-sup-tbody');
+      tbody.innerHTML = data.asignados_detalle.map(a => `
+        <tr>
+          <td class="monospace">${a.imei1}</td>
+          <td>${a.modelo}${a.marca?' <span style="color:var(--text2);font-size:11px">'+a.marca+'</span>':''}</td>
+          <td>${a.funcionario || '-'}</td>
+          <td style="color:var(--text2);font-size:12px">${a.rut || '-'}</td>
+          <td style="color:var(--text2);font-size:12px">${a.fecha_asignacion || '-'}</td>
+        </tr>`).join('');
+    } else if (usuario.rol !== 'supervisor') {
+      divSup.style.display = 'none';
+    }
+  }
 
   // Por tipo
   const tipoList = document.getElementById('tipo-list');
@@ -1323,6 +1393,21 @@ async function guardarMovimiento() {
   }
 
   // === BAJA ===
+  // Auditor SIEMPRE requiere evidencia (gift no es excepción)
+  if (window._bajaRequiereEvidencia) {
+    const archivoMap = {
+      regalo: document.getElementById('baja-archivo-regalo').files[0],
+      desecho: document.getElementById('baja-archivo-desecho').files[0],
+      robo: document.getElementById('baja-archivo-robo').files[0],
+      obsoleto: document.getElementById('baja-archivo-obsoleto').files[0],
+      otro: document.getElementById('baja-archivo-otro').files[0],
+    };
+    if (!archivoMap[tipoBaja]) {
+      showAlert('mov-alert','⚠️ Como auditor, debes adjuntar evidencia obligatoriamente para cualquier tipo de baja.','error');
+      return;
+    }
+  }
+
   const fd = new FormData();
   fd.append('equipo_id', currentEquipoId);
   fd.append('tipo_baja', tipoBaja);
@@ -1709,38 +1794,62 @@ async function cargarUsuarios() {
   document.getElementById('admin-tbody').innerHTML = usuarios.map(u => `<tr>
     <td style="font-size:13px;font-weight:500">${u.nombre}</td>
     <td style="font-size:13px;color:var(--text2)">${u.email}</td>
-    <td><span class="badge" style="background:${u.rol==='admin'?'#6c63ff22':u.rol==='auditor'?'#ffb02022':'#2dd4a022'};color:${u.rol==='admin'?'var(--primary)':u.rol==='auditor'?'var(--warning)':'var(--secondary)'}">${u.rol}</span></td>
+    <td><span class="badge" style="background:${u.rol==='admin'?'#6c63ff22':u.rol==='auditor'?'#ffb02022':'#10b98122'};color:${u.rol==='admin'?'var(--primary)':u.rol==='auditor'?'var(--warning)':'var(--secondary)'}">
+      ${u.rol==='admin'?'Administrador':u.rol==='auditor'?'Auditor':'Supervisor'}</span></td>
+    <td style="font-size:12px;color:var(--text2)">${u.area_nombre||'-'}</td>
     <td><span class="badge ${u.activo?'badge-disponible':'badge-baja'}">${u.activo?'Activo':'Inactivo'}</span></td>
-    <td style="font-size:12px;color:var(--text2)">${new Date(u.created_at).toLocaleDateString('es-CL')}</td>
     <td><div class="btn-group">
-      <button class="btn btn-secondary btn-sm" onclick="editarUsuario(${u.id},'${u.nombre}','${u.email}','${u.rol}')">✏️ Editar</button>
+      <button class="btn btn-secondary btn-sm" onclick="editarUsuario(${u.id},'${u.nombre}','${u.email}','${u.rol}',${u.area_id||'null'})">✏️ Editar</button>
       ${u.activo&&u.id!==usuario.id?`<button class="btn btn-danger btn-sm" onclick="desactivarUsuario(${u.id})">🚫</button>`:''}
     </div></td></tr>`).join('');
+}
+
+function toggleAreaUsuario() {
+  const rol = document.getElementById('u-rol').value;
+  document.getElementById('u-area-group').style.display = rol === 'supervisor' ? 'block' : 'none';
+}
+
+async function cargarAreasEnSelect(selectId, selectedId=null) {
+  const r = await api('/funcionarios/areas');
+  if (!r || !r.ok) return;
+  const areas = await r.json();
+  const sel = document.getElementById(selectId);
+  sel.innerHTML = '<option value="">Seleccionar área...</option>' +
+    areas.map(a => `<option value="${a.id}" ${selectedId==a.id?'selected':''}>${a.nombre}</option>`).join('');
 }
 
 function abrirModalUsuario() {
   editingUserId=null;
   document.getElementById('modal-usuario-title').textContent='Nuevo usuario';
   ['u-nombre','u-email','u-password'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('u-rol').value='operador';
+  document.getElementById('u-rol').value='supervisor';
+  document.getElementById('u-area-group').style.display='block';
+  cargarAreasEnSelect('u-area');
   document.getElementById('usuario-alert').innerHTML='';
   document.getElementById('modal-usuario').classList.add('open');
 }
 
-function editarUsuario(id,nombre,email,rol) {
+function editarUsuario(id,nombre,email,rol,areaId=null) {
   editingUserId=id;
   document.getElementById('modal-usuario-title').textContent='Editar usuario';
   document.getElementById('u-nombre').value=nombre;
   document.getElementById('u-email').value=email;
   document.getElementById('u-password').value='';
   document.getElementById('u-rol').value=rol;
+  toggleAreaUsuario();
+  if (areaId) {
+    cargarAreasEnSelect('u-area', areaId);
+  } else {
+    cargarAreasEnSelect('u-area');
+  }
   document.getElementById('usuario-alert').innerHTML='';
   document.getElementById('modal-usuario').classList.add('open');
 }
 
 async function guardarUsuario() {
   const nombre=document.getElementById('u-nombre').value.trim(), email=document.getElementById('u-email').value.trim(),
-        password=document.getElementById('u-password').value, rol=document.getElementById('u-rol').value;
+        password=document.getElementById('u-password').value, rol=document.getElementById('u-rol').value,
+        area_id=document.getElementById('u-area').value||null;
   if (!nombre||!email||!rol) { showAlert('usuario-alert','Nombre, email y rol son requeridos','error'); return; }
   if (!editingUserId&&!password) { showAlert('usuario-alert','La contraseña es requerida','error'); return; }
   let r;
@@ -1748,7 +1857,7 @@ async function guardarUsuario() {
     r = await api(`/usuarios/${editingUserId}`,{method:'PUT',body:JSON.stringify({nombre,email,rol})});
     if (r&&r.ok&&password) await api(`/usuarios/${editingUserId}/password`,{method:'PUT',body:JSON.stringify({password})});
   } else {
-    r = await api('/usuarios',{method:'POST',body:JSON.stringify({nombre,email,password,rol})});
+    r = await api('/usuarios',{method:'POST',body:JSON.stringify({nombre,email,password,rol,area_id})});
   }
   if (!r) return;
   const data = await r.json();

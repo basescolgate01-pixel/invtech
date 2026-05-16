@@ -152,4 +152,14 @@ router.get('/plantilla', auth, (req, res) => {
   res.send(buffer);
 });
 
+// GET /api/funcionarios/areas - listar áreas (para formularios)
+router.get('/areas', auth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, nombre FROM areas ORDER BY nombre ASC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al obtener áreas' });
+  }
+});
+
 module.exports = router;

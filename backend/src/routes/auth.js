@@ -11,7 +11,10 @@ router.post('/login', async (req, res) => {
 
   try {
     const { rows } = await pool.query(
-      'SELECT * FROM usuarios WHERE email = $1 AND activo = true', [email]
+      `SELECT u.*, a.nombre as area_nombre
+       FROM usuarios u
+       LEFT JOIN areas a ON u.area_id = a.id
+       WHERE u.email = $1 AND u.activo = true`, [email]
     );
     if (!rows.length)
       return res.status(401).json({ error: 'Credenciales inválidas' });
@@ -22,12 +25,21 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas' });
 
     const token = jwt.sign(
-      { id: user.id, nombre: user.nombre, rol: user.rol },
+      { id: user.id, nombre: user.nombre, rol: user.rol, area_id: user.area_id },
       process.env.JWT_SECRET,
       { expiresIn: '8h' }
     );
 
-    res.json({ token, usuario: { id: user.id, nombre: user.nombre, rol: user.rol } });
+    res.json({
+      token,
+      usuario: {
+        id: user.id,
+        nombre: user.nombre,
+        rol: user.rol,
+        area_id: user.area_id,
+        area_nombre: user.area_nombre
+      }
+    });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Error del servidor' });
